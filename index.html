@@ -1,0 +1,20 @@
+---
+layout: default
+title: Home
+breadcrumb:
+- Home
+---
+
+<h1>{{ site.title }}</h1>
+
+<div class="alert alert-info">
+	<h4 class="alert-heading">This is a BETA project!</h4>
+	<p class="mb-0">Help by contributing to <a href="{{ site.github.repository_url }}">the open-source repository</a>! <i class="fas fa-heart fa-fw text-danger"></i></p>
+</div>
+
+<p>Past subjects and other files, for the benefit of EPITA students.</p>
+
+<h2>Browse Folders</h2>
+{% assign subitems = site.data.subitems %}
+{% assign subitemsbiglayout = true %}
+{% include loaditems.html %}
