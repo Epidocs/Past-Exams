@@ -5,10 +5,10 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	{% if site.title %}
-	<meta name="title" content="{{ site.title }}" />
+		<meta name="title" content="{{ site.title }}" />
 	{% endif %}
 	{% if site.description %}
-	<meta name="description" content="{{ site.description }}" />
+		<meta name="description" content="{{ site.description }}" />
 	{% endif %}
 
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" />
@@ -53,27 +53,27 @@
 	</nav>
 
 	{% if page.breadcrumb %}
-	<ol class="breadcrumb">
-		<div class="container">
-			{% unless page.edit == "none" %}
-			<div class="float-right d-none d-md-flex">
-				<a href="{{ site.github.repository_url }}/blob/master{% if page.edit == "folder" %}{{ page.dir }}{% else %}/{{ page.path }}{% endif %}">
-					<i class="fas fa-pencil-alt fa-fw"></i>
-					Edit this {% if page.edit == "folder" %}folder{% else %}page{% endif %}
-				</a>
+		<ol class="breadcrumb">
+			<div class="container">
+				{% unless page.edit == "none" %}
+					<div class="float-right d-none d-md-flex">
+						<a href="{{ site.github.repository_url }}/blob/master{% if page.edit == "folder" %}{{ page.dir }}{% else %}/{{ page.path }}{% endif %}">
+							<i class="fas fa-pencil-alt fa-fw"></i>
+							Edit this {% if page.edit == "folder" %}folder{% else %}page{% endif %}
+						</a>
+					</div>
+				{% endunless %}
+				{% for item in page.breadcrumb %}
+					<li class="breadcrumb-item {% unless forloop.last %}active{% endunless %}">
+						{% if forloop.last %}
+							{{ item }}
+						{% else %}
+							<a href="{% for i in (1..forloop.rindex0) %}../{% endfor %}">{{ item }}</a>
+						{% endif %}
+					</li>
+				{% endfor %}
 			</div>
-			{% endunless %}
-			{% for item in page.breadcrumb %}
-			<li class="breadcrumb-item {% unless forloop.last %}active{% endunless %}">
-				{% if forloop.last %}
-				{{ item }}
-				{% else %}
-				<a href="{% for i in (1..forloop.rindex0) %}../{% endfor %}">{{ item }}</a>
-				{% endif %}
-			</li>
-			{% endfor %}
-		</div>
-	</ol>
+		</ol>
 	{% endif %}
 
 	<div id="main">
