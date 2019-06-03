@@ -1,0 +1,62 @@
+{% assign sfolders = 0 %}
+{% assign sfiles = 0 %}
+
+{% if subitems %}
+
+{% if subitems.folders %}
+{% assign sfolders = subitems.folders | size %}
+{% if sfolders > 0 %}
+{% if subitemsbiglayout %}
+{% for folder in subitems.folders %}
+<div class="card mb-3">
+	<h5 class="card-header">{{ folder.title | default: folder.path }}</h5>
+	<div class="card-body">
+		{% if folder.subtitle %}<h6 class="card-subtitle mb-2 text-muted">{{ folder.subtitle }}</h6>{% endif %}
+		{% if folder.description %}<p class="card-text">{{ folder.description }}</p>{% endif %}
+		<a href="{{ site.github.url }}/{{ folder.path }}" class="btn btn-primary card-link">Browse files</a>
+		<a href="{{ site.github.repository_url }}/blob/master/{{ folder.path }}" class="btn btn-light card-link">View in Github</a>
+	</div>
+</div>
+{% endfor %}
+{% else %}
+<div class="row">
+	{% for folder in subitems.folders %}
+	<div class="col-md-6">
+		<div class="card mb-3">
+			<div class="card-body">
+				<h5 class="card-title">{{ folder.title | default: folder.basename }}</h5>
+				{% if folder.subtitle %}<h6 class="card-subtitle mb-2 text-muted">{{ folder.subtitle }}</h6>{% endif %}
+				{% if folder.description %}<p class="card-text">{{ folder.description }}</p>{% endif %}
+				<a href="{{ site.github.url }}/{{ folder.path }}" class="btn btn-primary card-link">Browse files</a>
+				<a href="{{ site.github.repository_url }}/blob/master/{{ folder.path }}" class="btn btn-light card-link">View in Github</a>
+			</div>
+		</div>
+	</div>
+	{% endfor %}
+</div>
+{% endif %}
+{% endif %}
+{% endif %}
+
+{% if subitems.files %}
+{% assign sfiles = subitems.files | size %}
+{% if sfiles > 0 %}
+<div class="list-group">
+	{% for file in subitems.files %}
+	<a href="{{ site.github.url }}/{{ file.path }}" class="list-group-item list-group-item-action {% if file.embed %}embed{% endif %}">
+		{% if file.name %}
+		{{ file.name }} ({{ file.basename }})
+		{% else %}
+		{{ file.basename }}
+		{% endif %}
+	</a>
+	{% endfor %}
+</div>
+{% endif %}
+{% endif %}
+
+{% endif %}
+
+{% if sfolders <= 0 and sfiles <= 0 %}
+<p>Not any folder or file here.</p>
+{% endif %}
