@@ -2,7 +2,7 @@
 
 Past subjects and other files, for the benefit of EPITA students.
 
-Visit the website: [annals.epidocs.eu](https://annals.epidocs.eu/)
+Visit the website: [past-exams.epidocs.eu](https://past-exams.epidocs.eu/)
 
 
 ## Contributing
