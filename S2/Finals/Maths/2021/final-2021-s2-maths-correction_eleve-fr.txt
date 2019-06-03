@@ -1,0 +1,42 @@
+[EXERCICE 4]
+
+1)
+soit x in Ker(f)
+
+f(x) = 0
+f(f(x)) = f(0) = 0 donc x in Ker(fof)
+
+Donc Ker f inclu dans Ker f²
+
+
+2)
+soit y in Im(fof)
+
+il existe x tel que f(f(x)) = y
+or f(x) in E donc il existe u = f(x) in E tel que f(u) = y
+donc y in Im(f)
+
+Donc Imf f² inclu dans Im f
+
+
+3)
+Supposons Ker(f) = Ker(f²)
+Soit x in   Ker f inter Im  f
+
+x in Ker donc f(x) = 0 et x in Im donc il existe y tel que f(y) = x
+f(f(y)) = f(x) = 0
+donc y in Ker f², Or Ker f² = Ker f donc y in Ker f donc f(y) = 0 d'où x = 0
+donc Ker f inter Im  f= { 0 }
+
+Supposons Ker f inter Im  f  = { 0 }
+
+*  d'après le 1) Ker(f) C Ker(f²)
+De plus
+Soit x in Ker(f²)
+f(f(x)) = 0
+Soit y = f(x)
+f(y) = 0 donc y in Ker(f) et y = f(x) avec x dans E, donc y in Im(f)
+donc y in Ker f inter Im  f  donc y = 0 d'où f(x) = 0
+alors x in Ker(f)
+
+donc Ker(f²) C Ker(f) et Ker(f) C Ker(f²), Ker(f) = Ker(f²)
