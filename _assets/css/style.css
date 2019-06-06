@@ -33,8 +33,7 @@ body {
 #embed header .embed-title .embed-status {
 	margin-right: 10px;
 }
-#embed header .embed-close,
-#embed header .embed-download {
+#embed header > a {
 	float: right;
 	width: 40px;
 	height: 40px;
@@ -42,8 +41,7 @@ body {
 	color: #fff;
 	cursor: pointer;
 }
-#embed header .embed-close:hover, #embed header .embed-close:focus,
-#embed header .embed-download:hover, #embed header .embed-download:focus {
+#embed header > a:hover, #embed header > a:focus {
 	background: rgba(255, 255, 255, .1);
 }
 #embed .embed-error {

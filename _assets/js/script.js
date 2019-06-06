@@ -3,7 +3,7 @@
 $('.embed').click(function(e) {
 	e.preventDefault();
 	// console.log($(this).attr('href'));
-	loadPdfEmbed($(this).text(), $(this).attr('href'));
+	loadPdfEmbed($(this).text(), $(this).attr('href'), $(this));
 	$('#embed').show();
 });
 
@@ -12,7 +12,7 @@ $('#embed .embed-close').click(function(e) {
 	$('#embed').hide();
 });
 
-function loadPdfEmbed(title, url) {
+function loadPdfEmbed(title, url, $this) {
 	url = url || title;
 	
 	var currPage = 1;
@@ -23,6 +23,7 @@ function loadPdfEmbed(title, url) {
 	$('#embed .embed-title .content').text(title);
 	$('#embed .embed-title .embed-status').show().find('i').removeClass().addClass('fas fa-spinner fa-pulse fa-fw');
 	$('#embed .embed-download').attr('href', url);
+	$('#embed .embed-github').attr('href', $(this).attr('github-src'));
 	$('#embed .embed-error').hide();
 
 	// Asynchronous download of PDF
