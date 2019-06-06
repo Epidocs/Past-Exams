@@ -23,7 +23,7 @@ function loadPdfEmbed(title, url, $this) {
 	$('#embed .embed-title .content').text(title);
 	$('#embed .embed-title .embed-status').show().find('i').removeClass().addClass('fas fa-spinner fa-pulse fa-fw');
 	$('#embed .embed-download').attr('href', url);
-	$('#embed .embed-github').attr('href', $(this).attr('github-src'));
+	$('#embed .embed-github').attr('href', $this.attr('github-src'));
 	$('#embed .embed-error').hide();
 
 	// Asynchronous download of PDF
