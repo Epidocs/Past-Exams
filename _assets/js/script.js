@@ -2,8 +2,12 @@
 
 $('.embed').click(function(e) {
 	e.preventDefault();
-	// console.log($(this).attr('href'));
-	loadPdfEmbed($(this).text(), $(this).attr('href'), $(this));
+	
+	var $this = $(this);
+	var url = $this.attr('href').replace(/#/g, '%23'); // Encode all '#' characters
+	// console.log(url);
+	loadPdfEmbed($this.text(), url, $this);
+	
 	$('#embed').show();
 });
 
