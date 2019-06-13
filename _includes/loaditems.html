@@ -6,39 +6,25 @@
 	{% if subitems.folders %}
 		{% assign sfolders = subitems.folders | size %}
 		{% if sfolders > 0 %}
-			{% if subitemsbiglayout %}
+			{% unless subitemsbiglayout %}<div class="row">{% endunless %}
 				{% for folder in subitems.folders %}
-					<div class="card mb-3">
-						<h5 class="card-header">{{ folder.title | default: folder.path }}</h5>
-						<div class="card-body">
-							{% if folder.subtitle %}<h6 class="card-subtitle mb-2 text-muted">{{ folder.subtitle }}</h6>{% endif %}
-							{% if folder.description %}<p class="card-text">{{ folder.description }}</p>{% endif %}
-							<a href="{{ site.github.url }}/{{ folder.path }}" class="btn btn-primary card-link">Browse files</a>
-							<a href="{{ site.github.repository_url }}/blob/master/{{ folder.path }}" class="btn btn-light card-link">View in Github</a>
-						</div>
-					</div>
-				{% endfor %}
-			{% else %}
-				<div class="row">
-					{% for folder in subitems.folders %}
-						<div class="col-md-6">
-							<div class="card mb-3">
-								<div class="card-body">
-									<h5 class="card-title">{{ folder.title | default: folder.basename }}</h5>
-									{% if folder.subtitle %}
-										<h6 class="card-subtitle mb-2 text-muted">{{ folder.subtitle }}</h6>
-									{% endif %}
-									{% if folder.description %}
-										<p class="card-text">{{ folder.description }}</p>
-									{% endif %}
-									<a href="{{ site.github.url }}/{{ folder.path }}" class="btn btn-primary card-link">Browse files</a>
-									<a href="{{ site.github.repository_url }}/blob/master/{{ folder.path }}" class="btn btn-light card-link">View in Github</a>
-								</div>
+					{% unless subitemsbiglayout %}<div class="col-md-6">{% endunless %}
+						<div class="card mb-3">
+							<div class="card-body">
+								<h5 class="card-title">{{ folder.title | default: folder.basename }}</h5>
+								{% if folder.subtitle %}
+									<h6 class="card-subtitle mb-2 text-muted">{{ folder.subtitle }}</h6>
+								{% endif %}
+								{% if folder.description %}
+									<p class="card-text">{{ folder.description }}</p>
+								{% endif %}
+								<a href="{{ folder.path | append: '/' | relative_url }}" class="btn btn-primary card-link">Browse files</a>
+								<a href="{{ site.github.repository_url }}/blob/master/{{ folder.path }}" class="btn btn-light card-link">View in Github</a>
 							</div>
 						</div>
-					{% endfor %}
-				</div>
-			{% endif %}
+					{% unless subitemsbiglayout %}</div>{% endunless %}
+				{% endfor %}
+			{% unless subitemsbiglayout %}</div>{% endunless %}
 		{% endif %}
 	{% endif %}
 
