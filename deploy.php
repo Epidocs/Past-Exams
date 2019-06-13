@@ -61,7 +61,7 @@ function getMetaInfos($pathList) {
 				isset($metaJSONs[$dir]['folder']['description']) ? $metaJSONs[$dir]['folder']['description'] : '',
 				'- Home' . "\n" . '- ' . implode("\n" . '- ', $breadcrumb),
 				file_exists($dir . '/README.md') ? '{% include_relative README.md %}' : '',
-				strtolower(implode('.', $breadcrumb))
+				str_replace('#', 's', strtolower(implode('.', $breadcrumb)))
 			];
 			
 			// Save generated index file
@@ -117,7 +117,7 @@ function buildSubFolders($folders) {
 			'files' => getMetaInfos($glob['files'])); // No process yet for files.
 		
 		// Make new folders
-		$lowercaseFolder = strtolower($folder);
+		$lowercaseFolder = str_replace('#', 's', strtolower($folder));
 		if(!file_exists('_data/' . $lowercaseFolder . '/')) mkdir('_data/' . $lowercaseFolder . '/');
 		
 		// Save data file
