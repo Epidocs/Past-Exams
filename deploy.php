@@ -78,7 +78,7 @@ function getMetaInfos($pathList) {
 		}
 		
 		$metaInfos[$i]['basename'] = basename($path);
-		$metaInfos[$i]['path'] = $path;
+		$metaInfos[$i]['path'] = str_replace('#', '%23', $path); // URL encodes '#' characters
 		$i++;
 	}
 	return $metaInfos;
