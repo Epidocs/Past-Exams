@@ -19,6 +19,16 @@
 		{{ site.title }}
 		{% if page.title %}– {{ page.title }}{% endif %}
 	</title>
+	
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-140860210-3"></script>
+	<script>
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+
+	gtag('config', 'UA-140860210-3');
+	</script>
 
 </head>
 <body>
@@ -87,7 +97,8 @@
 
 	<footer>
 		<div class="container">
-			<p><b>Epidocs</b> is an open-source project. Go out there, <a href="{{ site.github.repository_url }}">help and contribute</a>!</p>
+			<p><b>Epidocs</b> is an open-source project. Go out there, <a href="{{ site.github.repository_url }}">help and contribute</a>! <br />
+			We use cookies for analytics purposes.</p>
 			<p><i class="fas fa-info-circle fa-fw"></i> Powered by <a href="https://pages.github.com/">Github Pages</a>. Made with <i class="fas fa-heart fa-fw text-danger"></i> by an EPITA student.</p>
 		</div>
 	</footer>
