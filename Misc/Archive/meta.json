@@ -1,0 +1,11 @@
+{
+	"folder": {
+		"title": "Archived Files",
+		"description": "Archived files that was useful in the past only."
+	},
+	"files": {
+		"welcome_booklet-2018-fr.pdf": {
+			"name": "Livret d'accueil 2018-2019"
+		}
+	}
+}
