@@ -10,16 +10,20 @@
 				{% for folder in subitems.folders %}
 					{% unless subitemsbiglayout %}<div class="col-md-6">{% endunless %}
 						<div class="card mb-3">
-							<div class="card-body">
-								<h5 class="card-title">{{ folder.title | default: folder.basename }}</h5>
-								{% if folder.subtitle %}
-									<h6 class="card-subtitle mb-2 text-muted">{{ folder.subtitle }}</h6>
-								{% endif %}
-								{% if folder.description %}
-									<p class="card-text">{{ folder.description }}</p>
-								{% endif %}
-								<a href="{{ folder.path | append: '/' | relative_url }}" class="btn btn-primary card-link">Browse files</a>
-								<a href="{{ site.github.repository_url }}/blob/master/{{ folder.path }}" class="btn btn-light card-link">View in Github</a>
+							<div class="card-body{% unless subitemsbiglayout %} d-flex justify-content-between{% endunless %}">
+								{% unless subitemsbiglayout %}<div>{% endunless %}
+									<h5 class="card-title">{{ folder.title | default: folder.basename }}</h5>
+									{% if folder.subtitle %}
+										<h6 class="card-subtitle mb-2 text-muted">{{ folder.subtitle }}</h6>
+									{% endif %}
+									{% if folder.description %}
+										<p class="card-text">{{ folder.description }}</p>
+									{% endif %}
+								{% unless subitemsbiglayout %}</div>{% endunless %}
+								{% unless subitemsbiglayout %}<div>{% endunless %}
+									<a href="{{ folder.path | append: '/' | relative_url }}" class="btn btn-primary card-link">Browse files</a>
+									<a href="{{ site.github.repository_url }}/blob/master/{{ folder.path }}" class="btn btn-light card-link">View in Github</a>
+								{% unless subitemsbiglayout %}</div>{% endunless %}
 							</div>
 						</div>
 					{% unless subitemsbiglayout %}</div>{% endunless %}
