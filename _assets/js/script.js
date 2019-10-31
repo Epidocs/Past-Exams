@@ -8,13 +8,19 @@ $('.embed').click(function(e) {
 	// console.log(url);
 	loadPdfEmbed($this.text(), url, $this);
 	
+	history.pushState({embedUrl: url}, $this.text(), "?" + url.substr(url.lastIndexOf('/') + 1));
 	$('#embed').show();
 });
 
 $('#embed .embed-close').click(function(e) {
 	e.preventDefault();
+	history.back();
 	$('#embed').hide();
 });
+
+window.onpopstate = function(e) {
+	$('#embed').hide();
+};
 
 function loadPdfEmbed(title, url, $this) {
 	url = url || title;
