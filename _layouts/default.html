@@ -49,14 +49,14 @@
 
 	<nav class="navbar navbar-expand-md navbar-dark bg-dark">
 		<div class="container">
-			<a class="navbar-brand" href="{{ 'index.html' | relative_url }}">{{ site.title }}</a>
+			<a class="navbar-brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
 				<div class="navbar-nav">
 					{% assign current = page.url | downcase | split: '/' %}
-					<a class="nav-item nav-link {% if current[1] == '' %}active{% endif %}" href="{{ '' | relative_url }}">Home</a>
+					<a class="nav-item nav-link {% if current[1] == '' %}active{% endif %}" href="{{ '/' | relative_url }}">Home</a>
 					<a class="nav-item nav-link {% if current[1] == 'about' %}active{% endif %}" href="{{ 'about' | relative_url }}">About</a>
 				</div>
 			</div>
