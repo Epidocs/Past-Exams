@@ -1,26 +1,33 @@
-/** Epidocs / Past-Exams JS */
+$(document).ready(function() {
+	// Get current URL path and assign 'active' class
+	var pathname = window.location.pathname;
+	var $link = $('#navbar .navbar-nav a[href="' + pathname + '"]');
+	$link.addClass('active');
 
-$('.embed').click(function(e) {
-	e.preventDefault();
-	
-	var $this = $(this);
-	var url = $this.attr('href').replace(/#/g, '%23'); // Encode all '#' characters
-	// console.log(url);
-	loadPdfEmbed($this.text(), url, $this);
-	
-	history.pushState({embedUrl: url}, $this.text(), "?" + url.substr(url.lastIndexOf('/') + 1));
-	$('#embed').show();
+	/** Epidocs / Past-Exams JS */
+
+	$('.embed').click(function(e) {
+		e.preventDefault();
+		
+		var $this = $(this);
+		var url = $this.attr('href').replace(/#/g, '%23'); // Encode all '#' characters
+		// console.log(url);
+		loadPdfEmbed($this.text(), url, $this);
+		
+		history.pushState({embedUrl: url}, $this.text(), "?" + url.substr(url.lastIndexOf('/') + 1));
+		$('#embed').show();
+	});
+
+	$('#embed .embed-close').click(function(e) {
+		e.preventDefault();
+		history.back();
+		$('#embed').hide();
+	});
+
+	window.onpopstate = function(e) {
+		$('#embed').hide();
+	};
 });
-
-$('#embed .embed-close').click(function(e) {
-	e.preventDefault();
-	history.back();
-	$('#embed').hide();
-});
-
-window.onpopstate = function(e) {
-	$('#embed').hide();
-};
 
 function loadPdfEmbed(title, url, $this) {
 	url = url || title;

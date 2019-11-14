@@ -49,14 +49,14 @@
 
 	<nav class="navbar navbar-expand-md navbar-dark bg-dark">
 		<div class="container">
-			<a class="navbar-brand" href="{{ 'index.html' | relative_url }}">{{ site.title }}</a>
+			<a class="navbar-brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
 				<div class="navbar-nav">
 					{% assign current = page.url | downcase | split: '/' %}
-					<a class="nav-item nav-link {% if current[1] == '' %}active{% endif %}" href="{{ '' | relative_url }}">Home</a>
+					<a class="nav-item nav-link {% if current[1] == '' %}active{% endif %}" href="{{ '/' | relative_url }}">Home</a>
 					<a class="nav-item nav-link {% if current[1] == 'about' %}active{% endif %}" href="{{ 'about' | relative_url }}">About</a>
 				</div>
 			</div>
@@ -64,6 +64,7 @@
 	</nav>
 
 	{% if page.breadcrumb %}
+		{% assign filename_parts = page.path | split: "/" %}
 		<ol class="breadcrumb">
 			<div class="container">
 				{% unless page.edit == "none" %}
@@ -74,12 +75,23 @@
 						</a>
 					</div>
 				{% endunless %}
+				
+				{% if filename_parts.last == "index.html" or filename_parts.last == "index.md" %}
+					{% assign roffset = 1 %}
+				{% else %}
+					{% assign roffset = 2 %}
+				{% endif %}
+				
 				{% for item in page.breadcrumb %}
 					<li class="breadcrumb-item {% unless forloop.last %}active{% endunless %}">
+						{% assign char0 = item | slice: 0 %}
 						{% if forloop.last %}
 							{{ item }}
+						{% elsif char0 == "~"  %}
+							{% assign len = item | size - 1 %}
+							{{ item | slice: 1, len }}
 						{% else %}
-							<a href="{% for i in (1..forloop.rindex0) %}../{% endfor %}">{{ item }}</a>
+							<a href="./{% for i in (roffset..forloop.rindex0) %}../{% endfor %}">{{ item }}</a>
 						{% endif %}
 					</li>
 				{% endfor %}
