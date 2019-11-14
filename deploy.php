@@ -50,17 +50,20 @@ function getMetaInfos($pathList) {
 			if(isset($metaJSONs[$dir]['folder']))
 				$metaInfos[$i] = $metaJSONs[$dir]['folder'];
 			
-			// Check if no subfiles in this folder
-			$subfiles = glob($path . '/*.*');
-			if(empty($subfiles) AND (!isset($metaJSONs[$dir]['prevent_listing']) OR !$metaInfos[$i]['subfolders_listing'])) {
-				// List subfolders
-				$subfolders = glob($path . '/*', GLOB_ONLYDIR) ?: [];
-				$metaInfos[$i]['subfolders'] = [];
-				foreach($subfolders as $folder) {
-					$metaInfos[$i]['subfolders'][] = array(
-						'basename' => basename($folder),
-						'path' =>str_replace('#', '%23', $folder)
-					);
+			// Check if the subfolders listing is allowed
+			if(isset($metaJSONs[$dir]['allow_subfolders_listing']) AND $metaInfos[$i]['allow_subfolders_listing'])) {
+				// Check if no subfiles in this folder
+				$subfiles = glob($path . '/*.*');
+				if(empty($subfiles)) {
+					// List subfolders
+					$subfolders = glob($path . '/*', GLOB_ONLYDIR) ?: [];
+					$metaInfos[$i]['subfolders'] = [];
+					foreach($subfolders as $folder) {
+						$metaInfos[$i]['subfolders'][] = array(
+							'basename' => basename($folder),
+							'path' =>str_replace('#', '%23', $folder)
+						);
+					}
 				}
 			}
 			
