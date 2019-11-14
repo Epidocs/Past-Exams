@@ -78,6 +78,12 @@ body > .breadcrumb {
 	background: #fff;
     padding: 1rem 0;
 }
+#main .card-buttons {
+	margin-top: -.25rem;
+}
+#main .card-buttons > * {
+	margin-top: .25rem;
+}
 
 footer {
     padding: 1rem 0;
