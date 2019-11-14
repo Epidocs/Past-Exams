@@ -52,7 +52,7 @@ function getMetaInfos($pathList) {
 			
 			// Check if no subfiles in this folder
 			$subfiles = glob($path . '/*.*');
-			if(empty($subfiles)) {
+			if(empty($subfiles) AND (!isset($metaJSONs[$dir]['prevent_listing']) OR !$metaInfos[$i]['subfolders_listing'])) {
 				// List subfolders
 				$subfolders = glob($path . '/*', GLOB_ONLYDIR) ?: [];
 				$metaInfos[$i]['subfolders'] = [];
