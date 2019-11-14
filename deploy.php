@@ -51,7 +51,7 @@ function getMetaInfos($pathList) {
 				$metaInfos[$i] = $metaJSONs[$dir]['folder'];
 			
 			// Check if the subfolders listing is allowed
-			if(isset($metaJSONs[$dir]['allow_subfolders_listing']) AND $metaJSONs[$dir]['allow_subfolders_listing'])) {
+			if(isset($metaJSONs[$dir]['allow_subfolders_listing']) AND $metaJSONs[$dir]['allow_subfolders_listing']) {
 				// Check if no subfiles in this folder
 				$subfiles = glob($path . '/*.*');
 				if(empty($subfiles)) {
