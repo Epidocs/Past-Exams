@@ -47,17 +47,26 @@
 		<!-- Canvas elements will be added here -->
 	</div>
 
-	<nav class="navbar navbar-expand-md navbar-dark bg-dark">
+	<nav id="navbar" class="navbar navbar-expand-md navbar-dark bg-dark">
 		<div class="container">
 			<a class="navbar-brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
 				<span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+				<div class="navbar-nav mr-auto">
+					<a class="nav-item nav-link" href="{{ '/' | relative_url }}">Home</a>
+					<a class="nav-item nav-link" href="{{ 'about' | relative_url }}">About</a>
+				</div>
 				<div class="navbar-nav">
-					{% assign current = page.url | downcase | split: '/' %}
-					<a class="nav-item nav-link {% if current[1] == '' %}active{% endif %}" href="{{ '/' | relative_url }}">Home</a>
-					<a class="nav-item nav-link {% if current[1] == 'about' %}active{% endif %}" href="{{ 'about' | relative_url }}">About</a>
+					<a class="nav-item nav-link" href="{{ site.github.repository_url }}"><i class="fas fa-code-branch fa-fw"></i> Github</a>
+					<div class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" id="navbarPlusDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-plus fa-fw"></i></a>
+						<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarPlusDropdown">
+							<a class="dropdown-item" href="https://epita.it/">EPITA.it</a>
+							<a class="dropdown-item" href="https://epidocs.eu/">Epidocs</a>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
