@@ -5,14 +5,20 @@ $(document).ready(function() {
 	$link.addClass('active');
 
 	/** Epidocs / Past-Exams JS */
-
+	
 	$('.embed').click(function(e) {
 		e.preventDefault();
 		
 		var $this = $(this);
 		var url = $this.attr('href').replace(/#/g, '%23'); // Encode all '#' characters
-		// console.log(url);
+		
 		loadPdfEmbed($this.text(), url, $this);
+		
+		gtag('event', 'open', {
+			event_category: 'Embedded PDF',
+			event_label: $this.text(),
+			transport_type: 'beacon'
+		});
 		
 		history.pushState({embedUrl: url}, $this.text(), "?" + url.substr(url.lastIndexOf('/') + 1));
 		$('#embed').show();
@@ -27,6 +33,11 @@ $(document).ready(function() {
 	window.onpopstate = function(e) {
 		$('#embed').hide();
 	};
+	
+	// Check if an embeded pdf should be opened
+	var matches = window.location.href.match(/(.+)\?(.+\..+)&?/);
+	if(matches)
+		$('.embed[href="' + matches[1] + matches[2] + '"]').click();
 });
 
 function loadPdfEmbed(title, url, $this) {
