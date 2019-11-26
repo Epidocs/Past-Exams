@@ -14,6 +14,12 @@ $(document).ready(function() {
 		
 		loadPdfEmbed($this.text(), url, $this);
 		
+		gtag('event', 'open', {
+			event_category: 'Embedded PDF',
+			event_label: $this.text(),
+			transport_type: 'beacon'
+		});
+		
 		history.pushState({embedUrl: url}, $this.text(), "?" + url.substr(url.lastIndexOf('/') + 1));
 		$('#embed').show();
 	});
