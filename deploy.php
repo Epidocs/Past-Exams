@@ -93,6 +93,8 @@ function getMetaInfos($pathList) {
 				$metaInfos[$i] = $metaJSONs[$dir]['files'][$pathInfo['basename']];
 			if(!isset($metaInfos[$i]['embed']) AND $pathInfo['extension'] == 'pdf')
 				$metaInfos[$i]['embed'] = true;
+			if(!isset($metaInfos[$i]['mcq']) AND preg_match('/mcq\.json$/i', $pathInfo['basename']))
+				$metaInfos[$i]['mcq'] = true;
 		}
 		
 		$metaInfos[$i]['basename'] = basename($path);
