@@ -41,7 +41,7 @@
 		{% if sfiles > 0 %}
 			<div class="list-group">
 				{% for file in subitems.files %}
-					<a href="{{ site.github.url }}/{{ file.path }}" class="list-group-item list-group-item-action {% if file.embed %}embed{% endif %}" github-src="{{ site.github.repository_url }}/blob/master/{{ file.path }}">
+					<a href="{% if file.mcq %}https://mcq.epidocs.eu/?{% endif %}{{ site.github.url }}/{{ file.path }}" class="list-group-item list-group-item-action {% if file.embed %}embed{% endif %}" github-src="{{ site.github.repository_url }}/blob/master/{{ file.path }}">
 						{% if file.name %}
 							{{ file.name }} ({{ file.basename }})
 						{% else %}
