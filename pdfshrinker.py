@@ -7,7 +7,8 @@ walkpath = argv[1] if len(argv) >= 2 else '.'
 
 if which('gswin64c') is not None: gs = 'gswin64c' # Windows 64-bit
 elif which('gswin32c') is not None: gs = 'gswin32c' # Windows 32-bit
-else: gs = 'gs'
+elif which('gs') is not None: gs = 'gs' # Other
+else: sys.exit('Error: Could not find GhostScript!')
 
 def shrink_file(root, filename):
 	f, e = os.path.splitext(filename) 
