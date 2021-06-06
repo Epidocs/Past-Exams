@@ -1,0 +1,25 @@
+---
+---
+
+{
+	"subject_urls": {
+		{% assign link_prefix = page.dir | absolute_url %}
+		"fr": "{{ link_prefix }}?final-2022-s1-elec-subject-fr.pdf"
+	},
+	"answers": [
+		null,
+		"B",
+		"ABD",
+		"B",
+		"C",
+		"C",
+		"B",
+		"C",
+		"BD",
+		"D",
+		"D",
+		"C"
+	],
+	"score_valid": 1,
+	"score_invalid": 0
+}

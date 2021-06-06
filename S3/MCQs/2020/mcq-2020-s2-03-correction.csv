@@ -1,0 +1,11 @@
+#,Algo,Maths,CIE,TIM,Phys,Elec,Archi
+1,ABC,B,,,B,C,A
+2,B,A,,,C,A,C
+3,B,A,,,D,A,D
+4,C,A,,,B,A,AD
+5,ABCD,C,,,A,B,BC
+6,B,AB,,,C,A,C
+7,CD,D,,,C,D,D
+8,C,A,,,A,D,B
+9,B,AD,,,A,A,D
+10,BD,C,,,C,A,B

@@ -1,0 +1,25 @@
+---
+---
+
+{
+	"subject_urls": {
+		{% assign link_prefix = page.dir | absolute_url %}
+		"fr": "{{ link_prefix }}?midterm-2021-s2-elec-subject-fr.pdf"
+		"en": "{{ link_prefix }}?midterm-2021-s2-elec-subject-en.pdf"
+	},
+	"answers": [
+		null,
+		"B",
+		"B",
+		"B",
+		"B",
+		"D",
+		"B",
+		"A",
+		"C",
+		"B",
+		"D"
+	],
+	"score_valid": 1,
+	"score_invalid": 0
+}

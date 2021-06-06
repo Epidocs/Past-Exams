@@ -1,0 +1,29 @@
+---
+---
+
+{
+	"subject_urls": {
+		{% assign link_prefix = page.dir | absolute_url %}
+		"fr": "{{ link_prefix }}?final-2021-s1-elec-subject-fr.pdf"
+		"en": "{{ link_prefix }}?final-2021-s1-elec-subject-en.pdf"
+	},
+	"answers": [
+		null,
+		"C",
+		"B",
+		"C",
+		"B",
+		"B",
+		"B",
+		"B",
+		"A",
+		"B",
+		"C",
+		"B",
+		"A",
+		"B",
+		"C"
+	],
+	"score_valid": 1,
+	"score_invalid": 0
+}

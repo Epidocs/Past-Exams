@@ -1,0 +1,14 @@
+branches:
+  only:
+  - master
+language: php
+php:
+  - 7.1
+script: php deploy.php
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
+  keep-history: false
+  on:
+    branch: master

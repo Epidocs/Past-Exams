@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: 'en' }}">
+<head>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	{% if site.title %}
+		<meta name="title" content="{{ site.title }}" />
+	{% endif %}
+	{% if site.description %}
+		<meta name="description" content="{{ site.description }}" />
+	{% endif %}
+
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" />
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<link rel="stylesheet" href="{{ '/assets/css/style.css?v=' | append: site.github.build_revision | relative_url }}" />
+
+	<title>
+		{{ site.title }}
+		{% if page.title %}– {{ page.title }}{% endif %}
+	</title>
+	
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-140860210-3"></script>
+	<script>
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+
+	gtag('config', 'UA-140860210-3');
+	</script>
+
+</head>
+<body>
+
+	<div id="embed">
+		<header class="bg-dark">
+			<a href="#" class="embed-close"><i class="fas fa-times fa-fw"></i></a>
+			<a href="#" class="embed-github" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+			<a href="#" class="embed-download" target="_blank"><i class="fas fa-cloud-download-alt fa-fw"></i></a>
+			<div class="embed-title">
+				<span class="embed-status"><i class="fas fa-minus fa-fw"></i></span>
+				<span class="content">OwO</span>
+			</div>
+		</header>
+		<div class="embed-error">Awooing..</div>
+		<!-- Canvas elements will be added here -->
+	</div>
+
+	<nav id="navbar" class="navbar navbar-expand-md navbar-dark bg-dark">
+		<div class="container">
+			<a class="navbar-brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+				<div class="navbar-nav mr-auto">
+					<a class="nav-item nav-link" href="{{ '/' | relative_url }}">Home</a>
+					<a class="nav-item nav-link" href="{{ 'about' | relative_url }}">About</a>
+				</div>
+				<div class="navbar-nav">
+					<a class="nav-item nav-link" href="{{ site.github.repository_url }}"><i class="fas fa-code-branch fa-fw"></i> Github</a>
+					<div class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" id="navbarPlusDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-plus fa-fw"></i></a>
+						<div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarPlusDropdown">
+							<a class="dropdown-item" href="https://epita.it/">EPITA.it</a>
+							<a class="dropdown-item" href="https://epidocs.eu/">Epidocs</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</nav>
+
+	{% if page.breadcrumb %}
+		{% assign filename_parts = page.path | split: "/" %}
+		<ol class="breadcrumb">
+			<div class="container">
+				{% unless page.edit == "none" %}
+					<div class="float-right d-none d-md-flex">
+						<a href="{{ site.github.repository_url }}/blob/master{% if page.edit == "folder" %}{{ page.dir }}{% else %}/{{ page.path }}{% endif %}">
+							<i class="fas fa-pencil-alt fa-fw"></i>
+							Edit this {% if page.edit == "folder" %}folder{% else %}page{% endif %}
+						</a>
+					</div>
+				{% endunless %}
+				
+				{% if filename_parts.last == "index.html" or filename_parts.last == "index.md" %}
+					{% assign roffset = 1 %}
+				{% else %}
+					{% assign roffset = 2 %}
+				{% endif %}
+				
+				{% for item in page.breadcrumb %}
+					<li class="breadcrumb-item {% unless forloop.last %}active{% endunless %}">
+						{% assign char0 = item | slice: 0 %}
+						{% if forloop.last %}
+							{{ item }}
+						{% elsif char0 == "~"  %}
+							{% assign len = item | size - 1 %}
+							{{ item | slice: 1, len }}
+						{% else %}
+							<a href="./{% for i in (roffset..forloop.rindex0) %}../{% endfor %}">{{ item }}</a>
+						{% endif %}
+					</li>
+				{% endfor %}
+			</div>
+		</ol>
+	{% endif %}
+
+	<div id="main">
+		<div class="container">
+
+		{{ content }}
+
+		</div>
+	</div>
+
+	<footer>
+		<div class="container">
+			<p><b>Epidocs</b> is an open-source project. Go out there, <a href="{{ site.github.repository_url }}">help and contribute</a>! <br />
+			We use cookies for analytics purposes.</p>
+			<p><i class="fas fa-info-circle fa-fw"></i> Powered by <a href="https://pages.github.com/">Github Pages</a>. Made with <i class="fas fa-heart fa-fw text-danger"></i> by an EPITA student.</p>
+		</div>
+	</footer>
+
+	<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha256-pasqAKBDmFT4eHoN2ndd6lN370kFiGUFyTiUHWhU7k8=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.2.2/pdf.min.js"></script>
+	<script src="{{ '/assets/js/script.js?v=' | append: site.github.build_revision | relative_url }}"></script>
+
+</body>
+</html>
