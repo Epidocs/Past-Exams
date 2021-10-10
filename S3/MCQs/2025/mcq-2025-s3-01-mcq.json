@@ -80,5 +80,6 @@
 		"D"
 	],
 	"score_valid": 1,
-	"score_invalid": 0
+	"score_invalid": -0.5,
+	"score_missing": 0
 }
