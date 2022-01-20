@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from multiprocessing import Pool
 from shutil import which
 from subprocess import run, DEVNULL
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Tuple
 import os
 import sys
 
@@ -66,7 +66,7 @@ def collect_pdfs(roots: List[str]) -> Set[str]:
 
 	return pdfs
 
-def shrink_file(filename: str):
+def shrink_file(filename: str) -> Tuple[str, float, float]:
 	"""
 		Shrinks a PDF file using GhostScript and prints out
 		the result of the shrinking on the standard output
@@ -89,32 +89,52 @@ def shrink_file(filename: str):
 		'-dPDFSETTINGS=/ebook',
 		'-sOutputFile=' + filename_gs_out,
 		filename
-	], stdout=DEVNULL)
+	], check=True, stdout=DEVNULL)
 
-	if status.returncode == 0:
-		# File size before shrinking
-		size_pre = os.path.getsize(filename)
+	# File size before shrinking
+	size_pre = os.path.getsize(filename)
 
-		# File size after shrinking
-		size_post = os.path.getsize(filename_gs_out)
+	# File size after shrinking
+	size_post = os.path.getsize(filename_gs_out)
 
-		# File size reduction in percentage and raw byte count
-		reduce_rate, reduce_byte_count = (0.0, 0)
+	# File size reduction in percentage and raw byte count
+	reduce_rate, reduce_byte_count = (0.0, 0)
 
-		if size_post < size_pre:
-			# The new file is smaller than the existing one; keep it
-			os.remove(filename)
-			os.rename(filename_gs_out, filename)
+	if size_post < size_pre:
+		# The new file is smaller than the existing one; keep it
+		os.remove(filename)
+		os.rename(filename_gs_out, filename)
 
-			reduce_rate = 1.0 - size_post / size_pre
-			reduce_byte_count = size_pre - size_post
-		else:
-			# The new file is larger than the existing one; delete it
-			os.remove(filename_gs_out)
-
-		print("shrink_file: {:.2f} % -- {} ({:,} bytes)".format(-reduce_rate * 100, filename, -reduce_byte_count))
+		reduce_rate = 1.0 - size_post / size_pre
+		reduce_byte_count = size_pre - size_post
 	else:
-		print("shrink_file: {}: return code {} for {}".format(gs_exec, status.returncode, filename), file=sys.stderr)
+		# The new file is larger than the existing one; delete it
+		os.remove(filename_gs_out)
+
+	return (filename, reduce_rate, reduce_byte_count)
+
+def shrink_files(pdfs: Set[str], thread_count: int) -> List[Tuple[str, float, float]]:
+	"""
+		Shrinks a collection of PDF files
+
+		:param pdfs: the set of PDF file filenames
+		:param thread_count: number of processes to use
+		:return: the results of the shrinking for each file
+	"""
+
+	results = []
+
+	with Pool(thread_count) as pool:
+		results = pool.map(shrink_file, pdfs)
+
+	return results
+
+def print_shrink_results(results: List[Tuple[str, float, float]]):
+	# sort the results by filename
+	results.sort(key=lambda result: result[0])
+
+	for filename, reduce_rate, reduce_byte_count in results:
+		print("shrink_file: {:.2f} % -- {} ({:,} bytes)".format(-reduce_rate * 100, filename, -reduce_byte_count))
 
 def main():
 	global gs_exec
@@ -129,8 +149,10 @@ def main():
 
 		pdfs = collect_pdfs(args.path)
 
-		with Pool(args.threads) as pool:
-			pool.map(shrink_file, pdfs)
+		print("[+] shrinking {} PDF files using {} threads...".format(len(pdfs), args.threads))
+		results = shrink_files(pdfs, args.threads)
+
+		print_shrink_results(results)
 	else:
 		sys.exit("Error: unable to find GhostScript executable in PATH")
 
