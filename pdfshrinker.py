@@ -15,7 +15,7 @@ gs_exec = "gs"
 
 def get_gs_exec() -> Optional[str]:
 	"""
-		Resolves the executable name of GhostScript
+		Resolves the name of the GhostScript executable
 
 		:return: the executable name of GhostScript or None if it was not found
 	"""
@@ -51,7 +51,7 @@ def collect_pdfs(roots: List[str]) -> Set[str]:
 		directories and their sub-directories
 
 		:param roots: the paths to the root directories
-		:return: a set containing every PDF filenames
+		:return: a set containing the filenames of every PDF file
 	"""
 
 	pdfs = set()
@@ -68,10 +68,10 @@ def collect_pdfs(roots: List[str]) -> Set[str]:
 
 def shrink_file(filename: str) -> Tuple[str, float, float]:
 	"""
-		Shrinks a PDF file using GhostScript and prints out
-		the result of the shrinking on the standard output
+		Shrinks a PDF file using GhostScript
 
 		:param filename: the filename of the PDF file
+        :return: the result in terms of filesize reduction
 	"""
 
 	global gs_exec
@@ -91,13 +91,13 @@ def shrink_file(filename: str) -> Tuple[str, float, float]:
 		filename
 	], check=True, stdout=DEVNULL)
 
-	# File size before shrinking
+	# Filesize before shrinking
 	size_pre = os.path.getsize(filename)
 
-	# File size after shrinking
+	# Filesize after shrinking
 	size_post = os.path.getsize(filename_gs_out)
 
-	# File size reduction in percentage and raw byte count
+	# Filesize reduction in percentage and raw byte count
 	reduce_rate, reduce_byte_count = (0.0, 0)
 
 	if size_post < size_pre:
@@ -117,9 +117,9 @@ def shrink_files(pdfs: Set[str], thread_count: int) -> List[Tuple[str, float, fl
 	"""
 		Shrinks a collection of PDF files
 
-		:param pdfs: the set of PDF file filenames
+		:param pdfs: a set containing the filenames of the PDF files to shrink
 		:param thread_count: number of processes to use
-		:return: the results of the shrinking for each file
+		:return: the results (in terms of filesize reduction) for each file
 	"""
 
 	results = []
