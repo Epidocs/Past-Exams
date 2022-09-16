@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 from argparse import ArgumentParser
 from multiprocessing import Pool
 from shutil import which
@@ -10,154 +9,103 @@ import sys
 
 DEFAULT_THREAD_COUNT = 2
 
-# GhostScript executable name
-gs_exec = "gs"
+ghostscript_name = 'gs'
 
-def get_gs_exec() -> Optional[str]:
-	"""
-		Resolves the name of the GhostScript executable
+def resolve_ghostscript_name() -> Optional[str]:
+    possible_binary_names = [
+        'gs',       # Mac / Linux
+        'gswin64c', # Windows (64 bits)
+        'gswin32c'  # Windows (32 bits)
+    ]
+    for binary in possible_binary_names:
+        if which(binary) is not None:
+            return binary
 
-		:return: the executable name of GhostScript or None if it was not found
-	"""
+def is_hidden(filename: str) -> bool:
+    filename = os.path.basename(filename)
+    return filename.startswith('.')
 
-	# Possible GhostScript executable names
-	executable_names = [
-		'gswin64c', # Windows 64-bit
-		'gswin32c', # Windows 32-bit
-		'gs'        # Other
-	]
-
-	# Search for the executable
-	for exec_name in executable_names:
-		if which(exec_name) is not None:
-			return exec_name
-
-	return None
+def is_visible(filename: str) -> bool:
+    return not is_hidden(filename)
 
 def is_pdf(filename: str) -> bool:
-	"""
-		Determines if a filename has a PDF extension
+    _, extension = os.path.splitext(filename)
+    return is_visible(filename) and extension == '.pdf'
 
-		:param filename: the filename
-		:return: True if the filename has a '.pdf' extension
-	"""
+def collect_pdfs(root: str) -> Set[str]:
+    pdf_filenames = set()
+    if os.path.isdir(root):
+        for filename in filter(is_visible, os.listdir(root)):
+            filepath = os.path.join(root, filename)
+            pdf_filenames = pdf_filenames.union(collect_pdfs(filepath))
+    elif is_pdf(root):
+        pdf_filenames.add(root)
+    return pdf_filenames
 
-	extension = os.path.splitext(filename)[1]
-	return extension == '.pdf'
+def run_ghostscript(filename_in, filename_out):
+    global ghostscript_name
+    run([
+        ghostscript_name,
+        '-q',
+        '-dNOPAUSE',
+        '-dBATCH',
+        '-sDEVICE=pdfwrite',
+        '-dPDFSETTINGS=/ebook',
+        '-sOutputFile=' + filename_out,
+        filename_in
+    ], check=True, stdout=DEVNULL)
 
-def collect_pdfs(roots: List[str]) -> Set[str]:
-	"""
-		Collects all the PDF files from the specified
-		root files and their sub-directories if any
+def compute_filesize_reduction(filename_in, filename_out):
+    filesize_in = os.path.getsize(filename_in)
+    filesize_out = os.path.getsize(filename_out)
+    if filesize_in > filesize_out:
+        reduction_rate = 1.0 - filesize_out / filesize_in
+        reduction_byte_count = filesize_in - filesize_out
+    else:
+        reduction_rate = 0.0
+        reduction_byte_count = 0
+    return (reduction_rate, reduction_byte_count)
 
-		:param roots: the paths to the root directories and/or PDF files
-		:return: a set containing the filenames of every PDF file
-	"""
+def shrink_pdf(filename: str) -> Tuple[str, float, float]:
+    filename_out = filename + '.gs'
+    run_ghostscript(filename, filename_out)
+    reduction_rate, reduction_byte_count = compute_filesize_reduction(filename, filename_out)
+    if reduction_byte_count > 0:
+        os.rename(filename_out, filename)
+    else:
+        os.remove(filename_out)
+    return (filename, reduction_rate, reduction_byte_count)
 
-	pdfs = set()
+def shrink_pdfs(pdf_filenames: Set[str], thread_count: int) -> List[Tuple[str, float, float]]:
+    results = []
+    with Pool(thread_count) as pool:
+        results = pool.map(shrink_pdf, pdf_filenames)
+    return results
 
-	for root in roots:
-		if os.path.isdir(root):
-			for root, dirs, files in os.walk(root):
-				for file in files:
-					if is_pdf(file):
-						pdfs.add(os.path.join(root, file))
+def print_shrink_results(shrink_results: List[Tuple[str, float, float]]):
+    shrink_results.sort(key=lambda result: result[0])
+    for filename, reduction_rate, reduction_byte_count in shrink_results:
+        print("{:.2f} % -- {} ({:,} bytes)".format(-reduction_rate * 100, filename, -reduction_byte_count))
 
-				pdfs.union(collect_pdfs(dirs))
-		elif is_pdf(root):
-			pdfs.add(root)
-
-	return pdfs
-
-def shrink_file(filename: str) -> Tuple[str, float, float]:
-	"""
-		Shrinks a PDF file using GhostScript
-
-		:param filename: the filename of the PDF file
-        :return: the result in terms of filesize reduction
-	"""
-
-	global gs_exec
-
-	# Temporary filename for the GhostScript output
-	filename_gs_out = filename + '.gs'
-
-	# Run GhostScript on the PDF file
-	status = run([
-		gs_exec,
-		'-q',
-		'-dNOPAUSE',
-		'-dBATCH',
-		'-sDEVICE=pdfwrite',
-		'-dPDFSETTINGS=/ebook',
-		'-sOutputFile=' + filename_gs_out,
-		filename
-	], check=True, stdout=DEVNULL)
-
-	# Filesize before shrinking
-	size_pre = os.path.getsize(filename)
-
-	# Filesize after shrinking
-	size_post = os.path.getsize(filename_gs_out)
-
-	# Filesize reduction in percentage and raw byte count
-	reduce_rate, reduce_byte_count = (0.0, 0)
-
-	if size_post < size_pre:
-		# The new file is smaller than the existing one; keep it
-		os.remove(filename)
-		os.rename(filename_gs_out, filename)
-
-		reduce_rate = 1.0 - size_post / size_pre
-		reduce_byte_count = size_pre - size_post
-	else:
-		# The new file is larger than the existing one; delete it
-		os.remove(filename_gs_out)
-
-	return (filename, reduce_rate, reduce_byte_count)
-
-def shrink_files(pdfs: Set[str], thread_count: int) -> List[Tuple[str, float, float]]:
-	"""
-		Shrinks a collection of PDF files
-
-		:param pdfs: a set containing the filenames of the PDF files to shrink
-		:param thread_count: number of processes to use
-		:return: the results (in terms of filesize reduction) for each file
-	"""
-
-	results = []
-
-	with Pool(thread_count) as pool:
-		results = pool.map(shrink_file, pdfs)
-
-	return results
-
-def print_shrink_results(results: List[Tuple[str, float, float]]):
-	# sort the results by filename
-	results.sort(key=lambda result: result[0])
-
-	for filename, reduce_rate, reduce_byte_count in results:
-		print("shrink_file: {:.2f} % -- {} ({:,} bytes)".format(-reduce_rate * 100, filename, -reduce_byte_count))
+def parse_args():
+    parser = ArgumentParser('pdfshrinker')
+    parser.add_argument('filenames', type=str, nargs='*', default=['.'], metavar='FILE', help="target directories and PDF files")
+    parser.add_argument('--threads', '-X', type=int, default=DEFAULT_THREAD_COUNT, metavar='COUNT', help="number of threads")
+    return parser.parse_args()
 
 def main():
-	global gs_exec
-	gs_exec = get_gs_exec()
+    global ghostscript_name
+    ghostscript_name = resolve_ghostscript_name()
+    if ghostscript_name is None:
+        print("Could not find GhostScript executable in PATH.", file=sys.stderr)
+        sys.exit(1)
+    args = parse_args()
+    pdf_filenames = set()
+    for filename in args.filenames:
+        pdf_filenames = pdf_filenames.union(collect_pdfs(filename))
+    print("[+] shrinking {} PDF files using {} threads...".format(len(pdf_filenames), args.threads))
+    shrink_results = shrink_pdfs(pdf_filenames, args.threads)
+    print_shrink_results(shrink_results)
 
-	if gs_exec is not None:
-		parser = ArgumentParser("pdfshrinker")
-		parser.add_argument("path", type=str, nargs='*', default=['.'], help="Target files and directories")
-		parser.add_argument("--threads", "-X", type=int, default=DEFAULT_THREAD_COUNT, metavar="count", help="Number of threads")
-
-		args = parser.parse_args()
-
-		pdfs = collect_pdfs(args.path)
-
-		print("[+] shrinking {} PDF files using {} threads...".format(len(pdfs), args.threads))
-		results = shrink_files(pdfs, args.threads)
-
-		print_shrink_results(results)
-	else:
-		sys.exit("Error: unable to find GhostScript executable in PATH")
-
-if __name__ == "__main__":
-	main()
+if __name__ == '__main__':
+    main()
