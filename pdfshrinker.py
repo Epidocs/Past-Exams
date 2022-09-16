@@ -47,22 +47,25 @@ def is_pdf(filename: str) -> bool:
 
 def collect_pdfs(roots: List[str]) -> Set[str]:
 	"""
-		Collects the PDF files of many root
-		directories and their sub-directories
+		Collects all the PDF files from the specified
+		root files and their sub-directories if any
 
-		:param roots: the paths to the root directories
+		:param roots: the paths to the root directories and/or PDF files
 		:return: a set containing the filenames of every PDF file
 	"""
 
 	pdfs = set()
 
 	for root in roots:
-		for root, dirs, files in os.walk(root):
-			for file in files:
-				if is_pdf(file):
-					pdfs.add(os.path.join(root, file))
+		if os.path.isdir(root):
+			for root, dirs, files in os.walk(root):
+				for file in files:
+					if is_pdf(file):
+						pdfs.add(os.path.join(root, file))
 
-			pdfs.union(collect_pdfs(dirs))
+				pdfs.union(collect_pdfs(dirs))
+		elif is_pdf(root):
+			pdfs.add(root)
 
 	return pdfs
 
