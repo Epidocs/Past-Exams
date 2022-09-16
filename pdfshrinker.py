@@ -112,15 +112,16 @@ def shrink_pdfs(pdf_filenames: Set[str], thread_count: int) -> List[Tuple[str, f
         results = pool.map(shrink_pdf, pdf_filenames)
     return results
 
-def print_shrink_result(filename: str, reduction_rate: float, reduction_byte_count: int):
+def print_shrink_result(result: Tuple[str, float, float]):
     """ Pretty-prints the results of a PDF file shrinking. """
+    filename, reduction_rate, reduction_byte_count = result
     print("{:.2f} % -- {} ({:,} bytes)".format(-reduction_rate * 100, filename, -reduction_byte_count))
 
-def print_shrink_results(shrink_results: List[Tuple[str, float, float]]):
+def print_shrink_results(results: List[Tuple[str, float, float]]):
     """ Pretty-prints the results of many PDF file shrinkings. """
-    shrink_results.sort(key=lambda result: result[0])
-    for shrink_result in shrink_results:
-        print_shrink_result(*shrink_result)
+    results.sort(key=lambda result: result[0])
+    for result in results:
+        print_shrink_result(result)
 
 def parse_args():
     parser = ArgumentParser('pdfshrinker')
@@ -138,7 +139,7 @@ def main():
     pdf_filenames = set()
     for filename in args.filenames:
         pdf_filenames = pdf_filenames.union(collect_pdfs(filename))
-    print("[+] shrinking {} PDF files using {} threads...".format(len(pdf_filenames), args.threads))
+    print("[+] shrinking {} PDF files using up to {} threads...".format(len(pdf_filenames), args.threads))
     shrink_results = shrink_pdfs(pdf_filenames, args.threads)
     print_shrink_results(shrink_results)
 
