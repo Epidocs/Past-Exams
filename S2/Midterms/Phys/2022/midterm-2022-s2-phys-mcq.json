@@ -1,0 +1,21 @@
+---
+---
+
+{
+	"subject_urls": {
+		{% assign link_prefix = page.dir | absolute_url %}
+	},
+	"answers": [
+		null,
+		"C",
+		"B",
+		"C",
+		"A",
+		"B",
+		"C",
+		"A",
+		"A"
+	],
+	"score_valid": 1,
+	"score_invalid": 0
+}

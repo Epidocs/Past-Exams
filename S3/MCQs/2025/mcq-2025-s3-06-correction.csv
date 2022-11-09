@@ -1,0 +1,11 @@
+#,Algo,Maths,Anglais,OC,Phys,Elec,Archi
+1,B,AB,A,,C,A,CD
+2,D,AC,A,,A,A,BD
+3,B,BCD,C,,B,B,C
+4,B,B,D,,B,C,AD
+5,A,D,C,,A,B,B
+6,A,B,B,,C,B,AB
+7,C,D,D,,A,A,B
+8,AB,A,B,,C,C,D
+9,BD,ABCD,D,,B,D,BCD
+10,AB,A,A,,C,B,BC

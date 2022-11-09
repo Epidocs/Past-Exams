@@ -1,0 +1,23 @@
+---
+layout: default
+title: Archive
+h1_title: Archived Files
+description: Archived files that was useful in the past only.
+breadcrumb:
+- Home
+- Misc
+- Archive
+edit: folder
+---
+
+<h1>{{ page.h1_title | default: page.title }}</h1>
+
+{% if page.description %}
+	<p>{{ page.description }}</p>
+{% endif %}
+
+
+
+<h2>Browse Folders and Files</h2>
+{% assign subitems = site.data.misc.archive.subitems %}
+{% include loaditems.html %}

@@ -1,0 +1,60 @@
+{% assign sfolders = 0 %}
+{% assign sfiles = 0 %}
+
+{% if subitems %}
+
+	{% if subitems.folders %}
+		{% assign sfolders = subitems.folders | size %}
+		{% if sfolders > 0 %}
+			{% unless subitemsbiglayout %}<div class="row">{% endunless %}
+				{% for folder in subitems.folders %}
+					{% unless subitemsbiglayout %}<div class="col-md-6">{% endunless %}
+						<div class="card mb-3">
+							<div class="card-body">
+								<h5 class="card-title">{{ folder.title | default: folder.basename }}</h5>
+								{% if folder.subtitle %}
+									<h6 class="card-subtitle mb-2 text-muted">{{ folder.subtitle }}</h6>
+								{% endif %}
+								{% if folder.description %}
+									<p class="card-text">{{ folder.description }}</p>
+								{% endif %}
+								<div class="card-buttons">
+									{% if folder.subfolders %}
+										{% for subfolder in folder.subfolders %}
+											<a href="{{ subfolder.path | append: '/' | relative_url }}" class="btn btn-info card-link ml-0">{{ subfolder.basename }}</a>
+										{% endfor %}
+									{% else %}
+										<a href="{{ folder.path | append: '/' | relative_url }}" class="btn btn-primary card-link">Browse files</a>
+									{% endif %}
+									<a href="{{ site.github.repository_url }}/blob/master/{{ folder.path }}" class="btn btn-light card-link">View in Github</a>
+								</div>
+							</div>
+						</div>
+					{% unless subitemsbiglayout %}</div>{% endunless %}
+				{% endfor %}
+			{% unless subitemsbiglayout %}</div>{% endunless %}
+		{% endif %}
+	{% endif %}
+
+	{% if subitems.files %}
+		{% assign sfiles = subitems.files | size %}
+		{% if sfiles > 0 %}
+			<div class="list-group">
+				{% for file in subitems.files %}
+					<a href="{% if file.mcq %}https://mcq.epidocs.eu/?{% endif %}{{ site.github.url }}/{{ file.path }}" class="list-group-item list-group-item-action {% if file.embed %}embed{% endif %}" github-src="{{ site.github.repository_url }}/blob/master/{{ file.path }}">
+						{% if file.name %}
+							{{ file.name }} ({{ file.basename }})
+						{% else %}
+							{{ file.basename }}
+						{% endif %}
+					</a>
+				{% endfor %}
+			</div>
+		{% endif %}
+	{% endif %}
+
+{% endif %}
+
+{% if sfolders <= 0 and sfiles <= 0 %}
+	<p>Not any folder or file here.</p>
+{% endif %}

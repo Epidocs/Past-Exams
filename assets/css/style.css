@@ -1,0 +1,133 @@
+/** Epidocs / Past-Exams CSS */
+
+body {
+	background: #f8f9fa; /* bg-light */
+}
+
+#embed {
+	display: none;
+	background: #f0f0f0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+	min-height: 100%;
+    border: 0;
+    z-index: 9999;
+}
+#embed header {
+	position: fixed;
+    width: 100%;
+	margin-bottom: 10px;
+	color: #fff;
+}
+#embed header * {
+	line-height: 40px;
+}
+#embed header .embed-title {
+    height: 40px;
+	padding: 0 20px;
+	white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+#embed header .embed-title .embed-status {
+	margin-right: 10px;
+}
+#embed header > a {
+	float: right;
+	width: 40px;
+	height: 40px;
+	text-align: center;
+	color: #fff;
+	cursor: pointer;
+}
+#embed header > a:hover, #embed header > a:focus {
+	background: rgba(255, 255, 255, .1);
+}
+#embed .embed-error {
+	margin-top: 50px;
+	padding: 0 20px;
+	color: #c04040;
+}
+#embed canvas {
+	width: 100%;
+	margin: 50px auto 10px;
+}
+#embed canvas + canvas {
+	margin-top: 0;
+}
+
+h1, h2 {
+	margin-bottom: 1rem;
+	padding-bottom: .5rem;
+	border-bottom: 1px solid rgba(0, 0, 0, .1);
+}
+
+img {
+	max-width: 100%;
+}
+
+body > .breadcrumb {
+	margin-bottom: 0;
+}
+.breadcrumb li {
+	display: table-cell;
+}
+
+#main {
+	background: #fff;
+    padding: 1rem 0;
+}
+#main .card-buttons {
+	margin-top: -.25rem;
+}
+#main .card-buttons > * {
+	margin-top: .25rem;
+}
+
+footer {
+    padding: 1rem 0;
+    border-top: 2px solid rgba(0, 0, 0, .1);
+}
+
+/*
+body {
+    margin: 60px auto;
+    width: 70%;
+}
+nav ul, footer ul {
+    font-family:'Helvetica', 'Arial', 'Sans-Serif';
+    padding: 0px;
+    list-style: none;
+    font-weight: bold;
+}
+nav ul li, footer ul li {
+    display: inline;
+    margin-right: 20px;
+}
+a {
+    text-decoration: none;
+    color: #999;
+}
+a:hover {
+    text-decoration: underline;
+}
+h1 {
+    font-size: 3em;
+    font-family:'Helvetica', 'Arial', 'Sans-Serif';
+}
+p {
+    font-size: 1.5em;
+    line-height: 1.4em;
+    color: #333;
+}
+
+ul.posts { 
+    margin: 20px auto 40px; 
+    font-size: 1.5em;
+}
+
+ul.posts li {
+    list-style: none;
+}
+*/

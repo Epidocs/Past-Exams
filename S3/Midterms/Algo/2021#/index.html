@@ -1,0 +1,25 @@
+---
+layout: default
+title: 2021#
+h1_title: 
+description: 
+breadcrumb:
+- Home
+- S3
+- Midterms
+- Algo
+- 2021#
+edit: folder
+---
+
+<h1>{{ page.h1_title | default: page.title }}</h1>
+
+{% if page.description %}
+	<p>{{ page.description }}</p>
+{% endif %}
+
+
+
+<h2>Browse Folders and Files</h2>
+{% assign subitems = site.data.s3.midterms.algo.2021s.subitems %}
+{% include loaditems.html %}
