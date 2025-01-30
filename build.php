@@ -61,7 +61,7 @@ function getMetaInfos($pathList) {
 					foreach($subfolders as $folder) {
 						$metaInfos[$i]['subfolders'][] = array(
 							'basename' => basename($folder),
-							'path' => str_replace('#', '%23', $folder)
+							'path' => str_replace(' ', '%20', str_replace('#', '%23', $folder)) // URL encodes '#' and ' ' characters
 						);
 					}
 				}
@@ -70,7 +70,7 @@ function getMetaInfos($pathList) {
 			// Generate breadcrumb for this folder
 			$breadcrumb = [];
 			foreach(explode('/', $dir) as $each)
-				$breadcrumb[] = $each;
+				$breadcrumb[] = str_replace(' ', '%20', $each); // URL encodes ' ' characters
 			
 			// Generate index file for this folder
 			$search = ['##DIRNAME##', '##TITLE##', '##DESCRIPTION##', '##BREADCRUMB##', '##CONTENT##', '##DATAPATH##'];
@@ -103,7 +103,7 @@ function getMetaInfos($pathList) {
 		if(!$isDir && ($pathInfo['extension'] == 'html' || $pathInfo['extension'] == 'md'))
 			$path = $pathInfo['dirname'] . '/' . $pathInfo['filename']; // Remove extension from path
 		
-		$metaInfos[$i]['path'] = str_replace('#', '%23', $path); // URL encodes '#' characters
+		$metaInfos[$i]['path'] = str_replace(' ', '%20', str_replace('#', '%23', $path)); // URL encodes '#' and ' ' characters
 		$i++;
 	}
 	return $metaInfos;
