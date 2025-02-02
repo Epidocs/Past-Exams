@@ -1,0 +1,90 @@
+
+name: Deploy CD
+
+on:
+
+  # Run on push on production branches
+  push:
+    branches:
+      # Production
+      - main
+      - master
+
+  # Run on manual triggers
+  workflow_dispatch:
+
+# Set GITHUB_TOKEN permissions for the workflow
+permissions:
+  contents: read
+
+# Set workflow concurrency rules
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+
+  # Build job
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+
+      # Steps dependencies
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check PHP version
+        run: |
+          # Check PHP version
+          php --version
+
+      # Execution steps
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare site for build
+        run: |
+          # Build site files with PHP script
+          php build.php
+
+      - name: Build site with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: .
+          destination: ./_site
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+  # Deploy job
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # Job dependencies
+    needs:
+      - build
+
+    # Set GITHUB_TOKEN permissions for the job
+    permissions:
+      pages: write
+      id-token: write
+
+    # Set deployment environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
