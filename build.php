@@ -95,7 +95,7 @@ function getMetaInfos($pathList)
 				isset($metaJSONs[$dir]['folder']['description']) ? $metaJSONs[$dir]['folder']['description'] : '',
 				'- Home' . "\n" . '- ' . implode("\n" . '- ', $breadcrumb),
 				file_exists($dir . '/README.md') ? '{% include_relative README.md %}' : '',
-				str_replace('#', 's', strtolower(implode('.', $breadcrumb))),
+				'["' . str_replace('#', 's', strtolower(implode('"]["', $breadcrumb))) . '"]',
 			];
 
 			// Save generated index file
