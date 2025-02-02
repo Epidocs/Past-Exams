@@ -55,7 +55,7 @@ jobs:
       - name: Build site with Jekyll
         uses: actions/jekyll-build-pages@v1
         with:
-          source: ./
+          source: .
           destination: ./_site
 
       - name: Upload GitHub Pages artifact
