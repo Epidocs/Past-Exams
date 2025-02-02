@@ -1,5 +1,5 @@
 
-name: Build and deploy site with GitHub Pages
+name: Deploy CD
 
 on:
   # Runs on pushes targeting the default branch
