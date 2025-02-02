@@ -70,7 +70,7 @@ function getMetaInfos($pathList) {
 			// Generate breadcrumb for this folder
 			$breadcrumb = [];
 			foreach(explode('/', $dir) as $each)
-				$breadcrumb[] = str_replace(' ', '%20', $each); // URL encodes ' ' characters
+			$breadcrumb[] = $each;
 			
 			// Generate index file for this folder
 			$search = ['##DIRNAME##', '##TITLE##', '##DESCRIPTION##', '##BREADCRUMB##', '##CONTENT##', '##DATAPATH##'];
