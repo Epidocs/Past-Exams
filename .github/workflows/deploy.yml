@@ -26,29 +26,42 @@ jobs:
 
   # Build job
   build:
+    name: Build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
 
-    - name: Setup Pages
-      uses: actions/configure-pages@v2
+      # Steps dependencies
 
-    - name: Check PHP version
-      run: php --version
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Compile site with PHP script
-      run: php build.php
+      - name: Check PHP version
+        run: |
+          # Check PHP version
+          php --version
 
-    - name: Build with Jekyll
-      uses: actions/jekyll-build-pages@v1
-      with:
-        source: ./
-        destination: ./_site
+      # Execution steps
 
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v1
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare site for build
+        run: |
+          # Build site files with PHP script
+          php build.php
+
+      - name: Build site with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
 
   # Deploy job
   deploy:
