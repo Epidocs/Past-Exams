@@ -76,7 +76,8 @@ function getMetaInfos($pathList)
 					{
 						$metaInfos[$i]['subfolders'][] = array(
 							'basename' => basename($folder),
-							'path' => str_replace(' ', '%20', str_replace('#', '%23', $folder)), // URL encodes '#' and ' ' characters
+							// URL encodes ' ', '#' and '&' characters
+							'path' => str_replace([' ', '#', '&'], ['%20', '%23', '%26'], $folder),
 						);
 					}
 				}
@@ -95,7 +96,7 @@ function getMetaInfos($pathList)
 				isset($metaJSONs[$dir]['folder']['description']) ? $metaJSONs[$dir]['folder']['description'] : '',
 				'- Home' . "\n" . '- ' . implode("\n" . '- ', $breadcrumb),
 				file_exists($dir . '/README.md') ? '{% include_relative README.md %}' : '',
-				str_replace(' ', '_', str_replace('#', 's', strtolower(implode('.', $breadcrumb)))),
+				str_replace([' ', '#'], ['_', 's'], strtolower(implode('.', $breadcrumb))),
 			];
 
 			// Save generated index file
@@ -129,7 +130,8 @@ function getMetaInfos($pathList)
 			$path = $pathInfo['dirname'] . '/' . $pathInfo['filename']; // Remove extension from path
 		}
 
-		$metaInfos[$i]['path'] = str_replace(' ', '%20', str_replace('#', '%23', $path)); // URL encodes '#' and ' ' characters
+		// URL encodes ' ', '#' and '&' characters
+		$metaInfos[$i]['path'] = str_replace([' ', '#', '&'], ['%20', '%23', '%26'], $path);
 		$i++;
 	}
 
@@ -183,7 +185,7 @@ function buildSubFolders($folders)
 		);
 
 		// Make new folders
-		$lowercaseFolder = str_replace(' ', '_', str_replace('#', 's', strtolower($folder)));
+		$lowercaseFolder = str_replace([' ', '#'], ['_', 's'], strtolower($folder));
 		if (!file_exists('_data/' . $lowercaseFolder . '/'))
 		{
 			mkdir('_data/' . $lowercaseFolder . '/');
