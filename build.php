@@ -76,8 +76,8 @@ function getMetaInfos($pathList)
 					{
 						$metaInfos[$i]['subfolders'][] = array(
 							'basename' => basename($folder),
-							// URL encodes ' ' and '#' characters
-							'path' => str_replace([' ', '#'], ['%20', '%23'], $folder),
+							// URL encodes ' ', '#' and '&' characters
+							'path' => str_replace([' ', '#', '&'], ['%20', '%23', '%26'], $folder),
 						);
 					}
 				}
@@ -130,8 +130,8 @@ function getMetaInfos($pathList)
 			$path = $pathInfo['dirname'] . '/' . $pathInfo['filename']; // Remove extension from path
 		}
 
-		// URL encodes ' ' and '#' characters
-		$metaInfos[$i]['path'] = str_replace([' ', '#'], ['%20', '%23'], $path);
+		// URL encodes ' ', '#' and '&' characters
+		$metaInfos[$i]['path'] = str_replace([' ', '#', '&'], ['%20', '%23', '%26'], $path);
 		$i++;
 	}
 
