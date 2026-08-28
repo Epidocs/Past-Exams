@@ -19,16 +19,8 @@
 		{{ site.title }}
 		{% if page.title %}– {{ page.title }}{% endif %}
 	</title>
-	
-	<!-- Global site tag (gtag.js) - Google Analytics -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-140860210-3"></script>
-	<script>
-	window.dataLayer = window.dataLayer || [];
-	function gtag(){dataLayer.push(arguments);}
-	gtag('js', new Date());
 
-	gtag('config', 'UA-140860210-3');
-	</script>
+	<script defer src="https://u.epidocs.eu/tw.js" data-website-id="64fb8a36-e473-449c-8f75-3b8a4f5787aa"></script>
 
 </head>
 <body>
@@ -84,13 +76,13 @@
 						</a>
 					</div>
 				{% endunless %}
-				
+
 				{% if filename_parts.last == "index.html" or filename_parts.last == "index.md" %}
 					{% assign roffset = 1 %}
 				{% else %}
 					{% assign roffset = 2 %}
 				{% endif %}
-				
+
 				{% for item in page.breadcrumb %}
 					<li class="breadcrumb-item {% unless forloop.last %}active{% endunless %}">
 						{% assign char0 = item | slice: 0 %}
