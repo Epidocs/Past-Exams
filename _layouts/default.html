@@ -19,16 +19,8 @@
 		{{ site.title }}
 		{% if page.title %}– {{ page.title }}{% endif %}
 	</title>
-	
-	<!-- Global site tag (gtag.js) - Google Analytics -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-140860210-3"></script>
-	<script>
-	window.dataLayer = window.dataLayer || [];
-	function gtag(){dataLayer.push(arguments);}
-	gtag('js', new Date());
 
-	gtag('config', 'UA-140860210-3');
-	</script>
+	<script defer src="https://u.epidocs.eu/tw.js" data-website-id="64fb8a36-e473-449c-8f75-3b8a4f5787aa"></script>
 
 </head>
 <body>
@@ -84,13 +76,13 @@
 						</a>
 					</div>
 				{% endunless %}
-				
+
 				{% if filename_parts.last == "index.html" or filename_parts.last == "index.md" %}
 					{% assign roffset = 1 %}
 				{% else %}
 					{% assign roffset = 2 %}
 				{% endif %}
-				
+
 				{% for item in page.breadcrumb %}
 					<li class="breadcrumb-item {% unless forloop.last %}active{% endunless %}">
 						{% assign char0 = item | slice: 0 %}
@@ -119,7 +111,7 @@
 	<footer>
 		<div class="container">
 			<p><b>Epidocs</b> is an open-source project. Go out there, <a href="{{ site.github.repository_url }}">help and contribute</a>! <br />
-			We use cookies for analytics purposes.</p>
+			Not affiliated with EPITA. Third-party content and trademarks are the property of their respective owners. Analytics are collected anonymously and not shared with third parties.</p>
 			<p><i class="fas fa-info-circle fa-fw"></i> Powered by <a href="https://pages.github.com/">Github Pages</a>. Made with <i class="fas fa-heart fa-fw text-danger"></i> by an EPITA student.</p>
 		</div>
 	</footer>
