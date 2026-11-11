@@ -24,11 +24,19 @@ concurrency:
 
 jobs:
 
-  # Build job
-  build:
-    name: Build
+  # Compress job
+  compress:
+    name: Compress PDFs
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    # Set GITHUB_TOKEN permissions for the job
+    permissions:
+      contents: write
+
+    # Commit to build, with compressed PDFs
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
 
     steps:
 
@@ -36,6 +44,65 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Install GhostScript
+        run: |
+          # Install GhostScript used by pdfshrinker.py
+          sudo apt-get update
+          sudo apt-get install -y ghostscript
+
+      # Execution steps
+
+      - name: List pushed PDF files
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          touch "$RUNNER_TEMP/pdfs"
+          if [ "$GITHUB_EVENT_NAME" != "push" ] || [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "No previous commit to compare with, skipping."
+            exit 0
+          fi
+          git fetch --no-tags --depth=1 origin "$BEFORE"
+          git diff --name-only --diff-filter=AM -z "$BEFORE" HEAD -- '*.pdf' > "$RUNNER_TEMP/pdfs"
+          tr '\0' '\n' < "$RUNNER_TEMP/pdfs"
+
+      - name: Compress PDF files
+        run: |
+          xargs -0 -r python3 pdfshrinker.py < "$RUNNER_TEMP/pdfs"
+
+      - name: Commit compressed PDF files
+        id: commit
+        run: |
+          if [ -n "$(git status --porcelain -- '*.pdf')" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git add -- '*.pdf'
+            git commit -m "Compress PDF files"
+            git push
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+  # Build job
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Job dependencies
+    needs:
+      - compress
+
+    # Build even if compression failed
+    if: ${{ !cancelled() }}
+
+    steps:
+
+      # Steps dependencies
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.compress.outputs.sha || github.sha }}
 
       - name: Check PHP version
         run: |
@@ -72,6 +139,9 @@ jobs:
     # Job dependencies
     needs:
       - build
+
+    # Deploy even if compression failed
+    if: ${{ !cancelled() && needs.build.result == 'success' }}
 
     # Set GITHUB_TOKEN permissions for the job
     permissions:

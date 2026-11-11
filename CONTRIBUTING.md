@@ -42,7 +42,8 @@ File names format details:
 
 ### Compress your files
 
-Compressing your files is highly recommended and appreciated. You can run the `pdfshrink.py` script to do so.
+PDF files pushed to `master` are automatically compressed by the CI with GhostScript.
+You can still compress them beforehand by running the `pdfshrink.py` script.
 
 Requirements:
 - Python 3.5+
