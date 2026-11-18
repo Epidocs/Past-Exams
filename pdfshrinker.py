@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from argparse import ArgumentParser
+from functools import partial
 from multiprocessing import Pool
 from shutil import copyfile, which
 from subprocess import run, DEVNULL
@@ -101,33 +102,57 @@ def overwrite_file(filename_in, filename_out):
         copyfile(filename_in, filename_out)
         os.remove(filename_in)
 
-def shrink_pdf(filename: str) -> Tuple[str, float, float, Optional[str]]:
+def resolve_output_filename(filename: str, output_dir: str) -> str:
+    """
+        Resolves the output file name in the output directory, preserving the relative path of the input file.
+        :param filename: input PDF filename
+        :param output_dir: output directory
+        :return: output PDF filename
+    """
+    relative_filename = os.path.relpath(filename)
+    if relative_filename.startswith(os.pardir + os.sep) or relative_filename == os.pardir:
+        raise ValueError("file is outside the current directory, cannot preserve its relative path")
+    return os.path.join(output_dir, relative_filename)
+
+def shrink_pdf(filename: str, output_dir: Optional[str] = None) -> Tuple[str, float, float, Optional[str]]:
     """
         Shrinks a PDF file. Never raises: failures are returned as an error message.
         :param filename: PDF filename
+        :param output_dir: output directory, or None to overwrite the PDF file in place
         :return: tuple with the PDF filename, reduction rate, byte count reduction and error message (or None)
     """
     try:
-        # Write to a temporary directory: the PDF's directory may not be writable
-        with TemporaryDirectory() as tmpdir:
-            filename_out = os.path.join(tmpdir, 'out.pdf')
+        if output_dir is not None:
+            # Export mode: the input file is left untouched
+            filename_out = resolve_output_filename(filename, output_dir)
+            os.makedirs(os.path.dirname(filename_out), exist_ok=True)
             run_ghostscript(filename, filename_out)
             reduction_rate, reduction_byte_count = compute_filesize_reduction(filename, filename_out)
-            if reduction_byte_count > 0:
-                overwrite_file(filename_out, filename)
+            if reduction_byte_count == 0:
+                # Not smaller: export the original file instead
+                copyfile(filename, filename_out)
+        else:
+            # Write to a temporary directory: the PDF's directory may not be writable
+            with TemporaryDirectory() as tmpdir:
+                filename_out = os.path.join(tmpdir, 'out.pdf')
+                run_ghostscript(filename, filename_out)
+                reduction_rate, reduction_byte_count = compute_filesize_reduction(filename, filename_out)
+                if reduction_byte_count > 0:
+                    overwrite_file(filename_out, filename)
         return (filename, reduction_rate, reduction_byte_count, None)
     except Exception as error:
         return (filename, 0.0, 0, "{}: {}".format(type(error).__name__, error))
 
-def shrink_pdfs(pdf_filenames: Set[str], thread_count: int) -> List[Tuple[str, float, float, Optional[str]]]:
+def shrink_pdfs(pdf_filenames: Set[str], thread_count: int, output_dir: Optional[str] = None) -> List[Tuple[str, float, float, Optional[str]]]:
     """
         Shrinks a set of PDF files.
         :param pdf_filenames: set of PDF filenames
         :param thread_count: number of threads
+        :param output_dir: output directory, or None to overwrite the PDF files in place
     """
     results = []
     with Pool(thread_count) as pool:
-        results = pool.map(shrink_pdf, pdf_filenames)
+        results = pool.map(partial(shrink_pdf, output_dir=output_dir), pdf_filenames)
     return results
 
 def print_shrink_result(result: Tuple[str, float, float, Optional[str]]):
@@ -148,6 +173,7 @@ def parse_args():
     parser = ArgumentParser('pdfshrinker')
     parser.add_argument('filenames', type=str, nargs='*', default=['.'], metavar='FILE', help="target directories and PDF files")
     parser.add_argument('--threads', '-X', type=int, default=DEFAULT_THREAD_COUNT, metavar='COUNT', help="number of threads")
+    parser.add_argument('--output-dir', '-o', type=str, default=None, metavar='DIR', help="write shrunk PDFs to this directory, preserving relative paths, instead of overwriting the originals")
     return parser.parse_args()
 
 def main():
@@ -161,7 +187,7 @@ def main():
     for filename in args.filenames:
         pdf_filenames = pdf_filenames.union(collect_pdfs(filename))
     print("[+] shrinking {} PDF files using up to {} threads...".format(len(pdf_filenames), args.threads))
-    shrink_results = shrink_pdfs(pdf_filenames, args.threads)
+    shrink_results = shrink_pdfs(pdf_filenames, args.threads, args.output_dir)
     print_shrink_results(shrink_results)
 
 if __name__ == '__main__':
