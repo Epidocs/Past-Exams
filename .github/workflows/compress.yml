@@ -69,6 +69,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           path: work
           persist-credentials: false
+          allow-unsafe-pr-checkout: true
 
       - name: Output PR head commit hash
         id: head_sha
@@ -215,6 +216,8 @@ jobs:
           ref: ${{ needs.compress.outputs.head_ref }}
           path: work
           token: ${{ (env.IS_FORK == 'true' && secrets.FORK_PUSH_TOKEN) || github.token }}
+          # Safe: only git add/commit/push of verified PDFs, no PR code is executed
+          allow-unsafe-pr-checkout: true
 
       # Execution steps
 
