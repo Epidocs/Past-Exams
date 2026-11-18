@@ -69,20 +69,24 @@ jobs:
 
       # Execution steps
 
-      - name: List changed PDF files
+      - name: Find PR number
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          touch /tmp/pdfs.txt
           # On manual triggers, look for an open PR from the selected branch
           if [ -z "${PR_NUMBER}" ]; then
             PR_NUMBER="$(gh pr list --head "$GITHUB_REF_NAME" --state open --json number --jq '.[0].number // empty')"
           fi
-          if [ -z "${PR_NUMBER}" ]; then
-            echo 'No pull request found, skipping.'
-            exit 0
-          fi
+          echo "PR_NUMBER=${PR_NUMBER}" >> "${GITHUB_ENV}"
+
+      - name: List changed PDF files
+        if: env.PR_NUMBER
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ env.PR_NUMBER }}
+        run: |
+          touch /tmp/pdfs.txt
           gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" \
             --jq '
               .[]
@@ -94,7 +98,8 @@ jobs:
 
       - name: Compress PDF files
         run: |
-          xargs -d '\n' -r python3 pdfshrinker.py < /tmp/pdfs.txt
+          touch /tmp/pdfs.txt
+          xargs -d '\n' -r python3 pdfshrinker.py -- < /tmp/pdfs.txt
 
       - name: Commit compressed PDF files
         id: commit
