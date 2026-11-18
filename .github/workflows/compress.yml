@@ -1,0 +1,82 @@
+name: Compress PDFs
+
+on:
+
+  # Run on push on production branches
+  push:
+    branches:
+      # Production
+      - main
+      - master
+
+  # Run on manual triggers
+  workflow_dispatch:
+
+# Set GITHUB_TOKEN permissions for the workflow
+permissions:
+  contents: read
+
+# Set workflow concurrency rules
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+
+  # Compress job
+  compress:
+    name: Compress PDFs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # Set GITHUB_TOKEN permissions for the job
+    permissions:
+      contents: write
+
+    # Commit to build, with compressed PDFs
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+
+    steps:
+
+      # Steps dependencies
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install GhostScript
+        run: |
+          # Install GhostScript used by pdfshrinker.py
+          sudo apt-get update
+          sudo apt-get install -y ghostscript
+
+      # Execution steps
+
+      - name: List pushed PDF files
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          touch "$RUNNER_TEMP/pdfs"
+          if [ "$GITHUB_EVENT_NAME" != "push" ] || [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            echo "No previous commit to compare with, skipping."
+            exit 0
+          fi
+          git fetch --no-tags --depth=1 origin "$BEFORE"
+          git diff --name-only --diff-filter=AM -z "$BEFORE" HEAD -- '*.pdf' > "$RUNNER_TEMP/pdfs"
+          tr '\0' '\n' < "$RUNNER_TEMP/pdfs"
+
+      - name: Compress PDF files
+        run: |
+          xargs -0 -r python3 pdfshrinker.py < "$RUNNER_TEMP/pdfs"
+
+      - name: Commit compressed PDF files
+        id: commit
+        run: |
+          if [ -n "$(git status --porcelain -- '*.pdf')" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git add -- '*.pdf'
+            git commit -m "Compress PDF files"
+            git push
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
