@@ -1,0 +1,109 @@
+name: Compress PDFs
+
+on:
+
+  # Run on pull requests to primary branches
+  pull_request:
+    branches:
+      # Production
+      - main
+      - master
+      # Staging
+      - staging
+      # Development
+      - dev
+    paths:
+      # CI/CD files
+      - '.github/workflows/compress.yml'
+      - 'pdfshrinker.py'
+      # PDF files
+      - '**/*.pdf'
+
+  # Run on manual triggers
+  workflow_dispatch:
+
+# Set GITHUB_TOKEN permissions for the workflow
+permissions:
+  contents: read
+
+# Set workflow concurrency rules
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # Compress job
+  compress:
+    name: Compress PDFs
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    if: |
+      github.event_name != 'pull_request'
+      || github.event.pull_request.head.repo.full_name == github.repository
+
+    # Set GITHUB_TOKEN permissions for the job
+    permissions:
+      contents: write
+      pull-requests: read
+
+    # Commit to build, with compressed PDFs
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+
+    steps:
+
+      # Steps dependencies
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+
+      - name: Install GhostScript
+        run: |
+          # Install GhostScript
+          sudo apt-get update
+          sudo apt-get install -y ghostscript
+
+      # Execution steps
+
+      - name: List changed PDF files
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          touch /tmp/pdfs.txt
+          # On manual triggers, look for an open PR from the selected branch
+          if [ -z "${PR_NUMBER}" ]; then
+            PR_NUMBER="$(gh pr list --head "$GITHUB_REF_NAME" --state open --json number --jq '.[0].number // empty')"
+          fi
+          if [ -z "${PR_NUMBER}" ]; then
+            echo 'No pull request found, skipping.'
+            exit 0
+          fi
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" \
+            --jq '
+              .[]
+              | select(.status != "removed" and (.filename | endswith(".pdf")))
+              | .filename
+            ' \
+            > /tmp/pdfs.txt
+          cat /tmp/pdfs.txt
+
+      - name: Compress PDF files
+        run: |
+          xargs -d '\n' -r python3 pdfshrinker.py < /tmp/pdfs.txt
+
+      - name: Commit compressed PDF files
+        id: commit
+        run: |
+          if [ -n "$(git status --porcelain -- '*.pdf')" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git add -- '*.pdf'
+            git commit -m "Compress PDF files"
+            git push
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
