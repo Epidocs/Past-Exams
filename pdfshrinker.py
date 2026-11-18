@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 from argparse import ArgumentParser
 from multiprocessing import Pool
-from shutil import which
+from shutil import copyfile, which
 from subprocess import run, DEVNULL
+from tempfile import TemporaryDirectory
 from typing import List, Optional, Set, Tuple
 import os
 import sys
@@ -86,22 +87,39 @@ def compute_filesize_reduction(filename_in, filename_out):
         reduction_byte_count = 0
     return (reduction_rate, reduction_byte_count)
 
-def shrink_pdf(filename: str) -> Tuple[str, float, float]:
+def overwrite_file(filename_in, filename_out):
     """
-        Shrinks a PDF file.
-        :param filename: PDF filename
-        :return: tuple with the PDF filename, reduction rate and byte count reduction
+        Replaces a file with another one, and removes the source file.
+        Tries an atomic replace first. If it fails (different filesystems, read-only directory...),
+        falls back to overwriting the file in place, which only requires write access to the file itself.
+        :param filename_in: source file name
+        :param filename_out: file name to overwrite
     """
-    filename_out = filename + '.gs'
-    run_ghostscript(filename, filename_out)
-    reduction_rate, reduction_byte_count = compute_filesize_reduction(filename, filename_out)
-    if reduction_byte_count > 0:
-        os.rename(filename_out, filename)
-    else:
-        os.remove(filename_out)
-    return (filename, reduction_rate, reduction_byte_count)
+    try:
+        os.replace(filename_in, filename_out)
+    except OSError:
+        copyfile(filename_in, filename_out)
+        os.remove(filename_in)
 
-def shrink_pdfs(pdf_filenames: Set[str], thread_count: int) -> List[Tuple[str, float, float]]:
+def shrink_pdf(filename: str) -> Tuple[str, float, float, Optional[str]]:
+    """
+        Shrinks a PDF file. Never raises: failures are returned as an error message.
+        :param filename: PDF filename
+        :return: tuple with the PDF filename, reduction rate, byte count reduction and error message (or None)
+    """
+    try:
+        # Write to a temporary directory: the PDF's directory may not be writable
+        with TemporaryDirectory() as tmpdir:
+            filename_out = os.path.join(tmpdir, 'out.pdf')
+            run_ghostscript(filename, filename_out)
+            reduction_rate, reduction_byte_count = compute_filesize_reduction(filename, filename_out)
+            if reduction_byte_count > 0:
+                overwrite_file(filename_out, filename)
+        return (filename, reduction_rate, reduction_byte_count, None)
+    except Exception as error:
+        return (filename, 0.0, 0, "{}: {}".format(type(error).__name__, error))
+
+def shrink_pdfs(pdf_filenames: Set[str], thread_count: int) -> List[Tuple[str, float, float, Optional[str]]]:
     """
         Shrinks a set of PDF files.
         :param pdf_filenames: set of PDF filenames
@@ -112,12 +130,15 @@ def shrink_pdfs(pdf_filenames: Set[str], thread_count: int) -> List[Tuple[str, f
         results = pool.map(shrink_pdf, pdf_filenames)
     return results
 
-def print_shrink_result(result: Tuple[str, float, float]):
+def print_shrink_result(result: Tuple[str, float, float, Optional[str]]):
     """ Pretty-prints the results of a PDF file shrinking. """
-    filename, reduction_rate, reduction_byte_count = result
+    filename, reduction_rate, reduction_byte_count, error = result
+    if error is not None:
+        print("FAILED -- {} ({})".format(filename, error), file=sys.stderr)
+        return
     print("{:.2f} % -- {} ({:,} bytes)".format(-reduction_rate * 100, filename, -reduction_byte_count))
 
-def print_shrink_results(results: List[Tuple[str, float, float]]):
+def print_shrink_results(results: List[Tuple[str, float, float, Optional[str]]]):
     """ Pretty-prints the results of many PDF file shrinkings. """
     results.sort(key=lambda result: result[0])
     for result in results:
