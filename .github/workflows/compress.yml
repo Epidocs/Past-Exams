@@ -297,7 +297,7 @@ jobs:
   # Comment job: posts the summary on the PR
   comment:
     name: Comment on PR
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     timeout-minutes: 5
 
     # Job dependencies
