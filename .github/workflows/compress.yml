@@ -2,8 +2,8 @@ name: Compress PDFs
 
 on:
 
-  # Run on pull requests to primary branches
-  pull_request:
+  # Run on pull requests to primary branches (allowing forks)
+  pull_request_target:
     branches:
       # Production
       - main
@@ -19,47 +19,63 @@ on:
       # PDF files
       - '**/*.pdf'
 
-  # Run on manual triggers
-  workflow_dispatch:
-
 # Set GITHUB_TOKEN permissions for the workflow
 permissions:
   contents: read
 
 # Set workflow concurrency rules
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
 
-  # Compress job
+  # Compress job: handles untrusted content and no secrets
   compress:
     name: Compress PDFs
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    if: |
-      github.event_name != 'pull_request'
-      || github.event.pull_request.head.repo.full_name == github.repository
+    timeout-minutes: 20
 
     # Set GITHUB_TOKEN permissions for the job
     permissions:
-      contents: write
+      contents: read
       pull-requests: read
 
-    # Commit to build, with compressed PDFs
     outputs:
-      sha: ${{ steps.commit.outputs.sha }}
+      pr_number: ${{ github.event.pull_request.number }}
+      head_repo: ${{ github.event.pull_request.head.repo.full_name }}
+      head_ref: ${{ github.event.pull_request.head.ref }}
+      head_sha: ${{ steps.head_sha.outputs.sha }}
+      changed: ${{ steps.summary.outputs.changed }}
 
     steps:
 
-      # Steps dependencies
+      # Initialization steps
 
-      - name: Checkout
-        uses: actions/checkout@v4
+      # Checkout trusted code from base branch
+      - name: Checkout trusted scripts
+        uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          ref: ${{ github.sha }}
+          path: trusted
+          sparse-checkout: pdfshrinker.py
+          persist-credentials: false
+
+      # Checkout untrusted content from PR head
+      - name: Checkout PR
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          path: work
+          persist-credentials: false
+
+      - name: Output PR head commit hash
+        id: head_sha
+        working-directory: work
+        run: |
+          # Output work repository head SHA
+          echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
 
       - name: Install GhostScript
         run: |
@@ -69,24 +85,11 @@ jobs:
 
       # Execution steps
 
-      - name: Find PR number
+      - name: List changed PDF files
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # On manual triggers, look for an open PR from the selected branch
-          if [ -z "${PR_NUMBER}" ]; then
-            PR_NUMBER="$(gh pr list --head "$GITHUB_REF_NAME" --state open --json number --jq '.[0].number // empty')"
-          fi
-          echo "PR_NUMBER=${PR_NUMBER}" >> "${GITHUB_ENV}"
-
-      - name: List changed PDF files
-        if: env.PR_NUMBER
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ env.PR_NUMBER }}
-        run: |
-          touch /tmp/pdfs.txt
           gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" \
             --jq '
               .[]
@@ -97,18 +100,248 @@ jobs:
           cat /tmp/pdfs.txt
 
       - name: Compress PDF files
+        working-directory: work
         run: |
-          touch /tmp/pdfs.txt
-          xargs -d '\n' -r python3 pdfshrinker.py -- < /tmp/pdfs.txt
+          # Prefix with ./ so that a file name can never be parsed as a GhostScript option
+          sed 's|^|./|' /tmp/pdfs.txt \
+          | xargs -d '\n' -r python3 ../trusted/pdfshrinker.py --
 
-      - name: Commit compressed PDF files
-        id: commit
+      - name: Summarize compression
+        id: summary
+        working-directory: work
         run: |
-          if [ -n "$(git status --porcelain -- '*.pdf')" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-            git add -- '*.pdf'
-            git commit -m "Compress PDF files"
-            git push
+          python3 - <<'EOF'
+          import os, subprocess
+          def size(n):
+            for unit in ('B', 'KiB', 'MiB'):
+              if n < 1024 or unit == 'MiB':
+                return '{:,.0f} {}'.format(n, unit) if unit == 'B' else '{:,.1f} {}'.format(n, unit)
+              n /= 1024
+          out = subprocess.run(
+            ['git', 'diff', '--name-only', '-z', '--', '*.pdf'],
+            capture_output=True, text=True, check=True,
+          ).stdout
+          files = sorted(f for f in out.split('\0') if f)
+          total = len(open('/tmp/pdfs.txt').read().splitlines())
+          rows, before, after = [], 0, 0
+          for f in files:
+            old = int(subprocess.run(
+              ['git', 'cat-file', '-s', 'HEAD:' + f],
+              capture_output=True, text=True, check=True,
+            ).stdout)
+            new = os.path.getsize(f)
+            before, after = before + old, after + new
+            rows.append('| `{}` | {} | {} | -{:.1f} % |'.format(f, size(old), size(new), (1 - new / old) * 100))
+          lines = ['<!-- compress-pdfs -->', '### PDF compression', '']
+          if rows:
+            lines += [
+              'Optimized **{}** of {} PDF file(s), saving **{}** (-{:.1f} %).'.format(
+                len(rows), total, size(before - after), (1 - after / before) * 100
+              ),
+              '', '| File | Before | After | Reduction |', '| --- | ---: | ---: | ---: |',
+            ] + rows
+          else:
+            lines.append('No PDF file could be optimized further ({} checked).'.format(total))
+          with open('/tmp/summary.md', 'w') as fh:
+            fh.write('\n'.join(lines) + '\n')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as fh:
+            fh.write('changed={}\n'.format('true' if rows else 'false'))
+          EOF
+          cat /tmp/summary.md >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Collect compressed PDF files
+        if: steps.summary.outputs.changed == 'true'
+        working-directory: work
+        run: |
+          mkdir -p /tmp/compressed_pdfs
+          git diff --name-only -z -- '*.pdf' | xargs -0 -r cp --parents -t /tmp/compressed_pdfs
+
+      # This lets contributors download files when they cannot be pushed to their fork
+      - name: Upload compressed PDF files
+        if: steps.summary.outputs.changed == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: compressed-pdfs
+          path: /tmp/compressed_pdfs
+
+      - name: Upload summary
+        uses: actions/upload-artifact@v7
+        with:
+          name: summary
+          path: /tmp/summary.md
+
+  # Publish job: commits compressed PDFs if possible
+  publish:
+    name: Commit compressed PDFs
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+
+    # Job dependencies
+    needs:
+      - compress
+
+    if: needs.compress.outputs.changed == 'true'
+
+    permissions:
+      contents: write
+      pull-requests: read
+
+    env:
+      IS_FORK: ${{ needs.compress.outputs.head_repo != github.repository }}
+      # PAT required for pushing to forks
+      FORK_PUSH_TOKEN: ${{ secrets.FORK_PUSH_TOKEN }}
+
+    steps:
+
+      # Initialization steps
+
+      - name: Determine push permission
+        id: mode
+        run: |
+          if [ "${IS_FORK}" != 'true' ]; then
+            echo 'push=true' >> "${GITHUB_OUTPUT}"
+          elif [ -n "${FORK_PUSH_TOKEN}" ]; then
+            echo 'push=true' >> "${GITHUB_OUTPUT}"
+          else
+            echo 'push=false' >> "${GITHUB_OUTPUT}"
+            echo '::notice::No FORK_PUSH_TOKEN secret: compressed PDFs are only available as the compressed-pdfs artifact.'
           fi
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout PR
+        if: steps.mode.outputs.push == 'true'
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ needs.compress.outputs.head_repo }}
+          ref: ${{ needs.compress.outputs.head_ref }}
+          path: work
+          token: ${{ (env.IS_FORK == 'true' && secrets.FORK_PUSH_TOKEN) || github.token }}
+
+      # Execution steps
+
+      - name: Assert branch did not change
+        id: fresh
+        if: steps.mode.outputs.push == 'true'
+        working-directory: work
+        env:
+          EXPECTED_SHA: ${{ needs.compress.outputs.head_sha }}
+        run: |
+          # Abort if the branch has updated since compression
+          if [ "$(git rev-parse HEAD)" = "${EXPECTED_SHA}" ]; then
+            echo 'fresh=true' >> "${GITHUB_OUTPUT}"
+          else
+            echo 'fresh=false' >> "${GITHUB_OUTPUT}"
+            echo '::notice::The branch changed since compression, skipping (a newer run will handle it).'
+          fi
+
+      - name: Download compressed PDF files
+        if: steps.fresh.outputs.fresh == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: compressed-pdfs
+          path: /tmp/compressed
+
+      - name: Apply compressed PDF files
+        id: apply
+        if: steps.fresh.outputs.fresh == 'true'
+        working-directory: work
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.compress.outputs.pr_number }}
+        run: |
+          # Verify and apply compressed PDF files that are part of the PR
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" \
+            --jq '
+              .[]
+              | select(.status != "removed" and (.filename | endswith(".pdf")))
+              | .filename
+            ' \
+            > /tmp/pr_changed_files.txt
+          is_regular_file() {
+            # Path is a regular file and not a symlink
+            [ -f "$1" ] && [ ! -L "$1" ]
+          }
+          is_pdf() {
+            # Path is a non-empty file and starts with the PDF signature
+            [ -s "$1" ] && [ "$(head -c 5 "$1")" = '%PDF-' ]
+          }
+          count=0
+          while IFS= read -r f; do
+            # Consider each file untrusted and verify it before applying
+            src="/tmp/compressed/${f}"
+            is_regular_file "${src}" || continue # Compressed file must exist
+            is_pdf "${src}" || continue          # ...and look like a PDF
+            is_regular_file "${f}" || continue   # Target must be an existing file in the PR
+            cp -- "${src}" "${f}"
+            git add -- "${f}"
+            count=$((count + 1))
+          done < /tmp/pr_changed_files.txt
+          echo "Applied ${count} file(s)"
+          if git diff --cached --quiet; then
+            echo 'applied=false' >> "${GITHUB_OUTPUT}"
+          else
+            echo 'applied=true' >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Commit and push
+        if: steps.apply.outputs.applied == 'true'
+        working-directory: work
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Compress PDF files"
+          git push
+
+  # Comment job: posts the summary on the PR
+  comment:
+    name: Comment on PR
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    # Job dependencies
+    needs:
+      - compress
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+
+      - name: Download summary
+        uses: actions/download-artifact@v8
+        with:
+          name: summary
+          path: /tmp/summary
+
+      - name: Comment on PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.compress.outputs.pr_number }}
+        run: |
+          # Hide previous summary comments as outdated
+          gh api --paginate "repos/$GITHUB_REPOSITORY/issues/${PR_NUMBER}/comments" \
+            --jq '
+              .[]
+              | select(
+                .user.login == "github-actions[bot]"
+                and (.body | startswith("<!-- compress-pdfs -->"))
+              )
+              | .node_id
+            ' |
+          while read -r node_id; do
+            gh api graphql \
+              -f query='
+                mutation($id: ID!) {
+                  minimizeComment(input: {subjectId: $id, classifier: OUTDATED}) {
+                    minimizedComment {
+                      isMinimized
+                    }
+                  }
+                }
+              ' \
+              -f id="$node_id" > /dev/null
+          done
+          # Post a new summary comment
+          gh pr comment "${PR_NUMBER}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --body-file /tmp/summary/summary.md
