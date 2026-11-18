@@ -78,7 +78,7 @@ def run_ghostscript(filename_in, filename_out):
 
 def compute_min_reduction(filesize: int, base: int = MIN_REDUCTION_BASE) -> float:
     """ Minimum bytes a shrink must save for a file of this size (0 if base is 0). """
-    if filesize <= base:
+    if base <= 0 or filesize <= base:
         return 0
     return base * math.log10(filesize / base)
 
