@@ -2,12 +2,22 @@ name: Compress PDFs
 
 on:
 
-  # Run on push on production branches
-  push:
+  # Run on pull requests to primary branches
+  pull_request:
     branches:
       # Production
       - main
       - master
+      # Staging
+      - staging
+      # Development
+      - dev
+    paths:
+      # CI/CD files
+      - '.github/workflows/compress.yml'
+      - 'pdfshrinker.py'
+      # PDF files
+      - '**/*.pdf'
 
   # Run on manual triggers
   workflow_dispatch:
@@ -18,7 +28,7 @@ permissions:
 
 # Set workflow concurrency rules
 concurrency:
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -29,9 +39,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
+    if: |
+      github.event_name != 'pull_request'
+      || github.event.pull_request.head.repo.full_name == github.repository
+
     # Set GITHUB_TOKEN permissions for the job
     permissions:
       contents: write
+      pull-requests: read
 
     # Commit to build, with compressed PDFs
     outputs:
@@ -43,31 +58,43 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
 
       - name: Install GhostScript
         run: |
-          # Install GhostScript used by pdfshrinker.py
+          # Install GhostScript
           sudo apt-get update
           sudo apt-get install -y ghostscript
 
       # Execution steps
 
-      - name: List pushed PDF files
+      - name: List changed PDF files
         env:
-          BEFORE: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          touch "$RUNNER_TEMP/pdfs"
-          if [ "$GITHUB_EVENT_NAME" != "push" ] || [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-            echo "No previous commit to compare with, skipping."
+          touch /tmp/pdfs.txt
+          # On manual triggers, look for an open PR from the selected branch
+          if [ -z "${PR_NUMBER}" ]; then
+            PR_NUMBER="$(gh pr list --head "$GITHUB_REF_NAME" --state open --json number --jq '.[0].number // empty')"
+          fi
+          if [ -z "${PR_NUMBER}" ]; then
+            echo 'No pull request found, skipping.'
             exit 0
           fi
-          git fetch --no-tags --depth=1 origin "$BEFORE"
-          git diff --name-only --diff-filter=AM -z "$BEFORE" HEAD -- '*.pdf' > "$RUNNER_TEMP/pdfs"
-          tr '\0' '\n' < "$RUNNER_TEMP/pdfs"
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/files" \
+            --jq '
+              .[]
+              | select(.status != "removed" and (.filename | endswith(".pdf")))
+              | .filename
+            ' \
+            > /tmp/pdfs.txt
+          cat /tmp/pdfs.txt
 
       - name: Compress PDF files
         run: |
-          xargs -0 -r python3 pdfshrinker.py < "$RUNNER_TEMP/pdfs"
+          xargs -d '\n' -r python3 pdfshrinker.py < /tmp/pdfs.txt
 
       - name: Commit compressed PDF files
         id: commit
