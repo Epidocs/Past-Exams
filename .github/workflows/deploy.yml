@@ -42,7 +42,7 @@ jobs:
       # Steps dependencies
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install GhostScript
         run: |
@@ -99,7 +99,7 @@ jobs:
       # Steps dependencies
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.compress.outputs.sha || github.sha }}
 
@@ -111,7 +111,7 @@ jobs:
       # Execution steps
 
       - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Prepare site for build
         run: |
@@ -125,7 +125,7 @@ jobs:
           destination: ./_site
 
       - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./_site
 
@@ -156,4 +156,4 @@ jobs:
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
