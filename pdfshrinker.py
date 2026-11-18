@@ -6,10 +6,15 @@ from shutil import copyfile, which
 from subprocess import run, DEVNULL
 from tempfile import TemporaryDirectory
 from typing import List, Optional, Set, Tuple
+import math
 import os
 import sys
 
 DEFAULT_THREAD_COUNT = 2
+
+# A shrink is kept only if it saves more than BASE * log10(size / BASE) bytes,
+# with BASE = 10 KB (no minimum at or below BASE).
+MIN_REDUCTION_BASE = 10 * 1024
 
 ghostscript_name = 'gs'
 
@@ -18,7 +23,7 @@ def resolve_ghostscript_name() -> Optional[str]:
     possible_binary_names = [
         'gs',       # Mac / Linux
         'gswin64c', # Windows (64 bits)
-        'gswin32c'  # Windows (32 bits)
+        'gswin32c', # Windows (32 bits)
     ]
     for binary in possible_binary_names:
         if which(binary) is not None:
@@ -71,22 +76,23 @@ def run_ghostscript(filename_in, filename_out):
         filename_in
     ], check=True, stdout=DEVNULL)
 
+def compute_min_reduction(filesize: int) -> float:
+    """ Minimum bytes a shrink must save for a file of this size. """
+    if filesize <= MIN_REDUCTION_BASE:
+        return 0
+    return MIN_REDUCTION_BASE * math.log10(filesize / MIN_REDUCTION_BASE)
+
 def compute_filesize_reduction(filename_in, filename_out):
     """
         Computes the reduction rate and byte count difference between two files.
-        :param filename_in: original file name
-        :param filename_out: new file name
-        :return: tuple with the reduction rate and byte count difference or (0.0, 0) if the new file is larger than the original
+        :return: tuple with the reduction rate and byte count difference or (0.0, 0) if below the threshold
     """
     filesize_in = os.path.getsize(filename_in)
     filesize_out = os.path.getsize(filename_out)
-    if filesize_in > filesize_out:
-        reduction_rate = 1.0 - filesize_out / filesize_in
-        reduction_byte_count = filesize_in - filesize_out
-    else:
-        reduction_rate = 0.0
-        reduction_byte_count = 0
-    return (reduction_rate, reduction_byte_count)
+    reduction_byte_count = filesize_in - filesize_out
+    if reduction_byte_count <= compute_min_reduction(filesize_in):
+        return (0.0, 0)
+    return (reduction_byte_count / filesize_in, reduction_byte_count)
 
 def overwrite_file(filename_in, filename_out):
     """
