@@ -47,6 +47,7 @@ jobs:
       head_ref: ${{ github.event.pull_request.head.ref }}
       head_sha: ${{ steps.head_sha.outputs.sha }}
       changed: ${{ steps.summary.outputs.changed }}
+      skip: ${{ steps.guard.outputs.skip }}
 
     steps:
 
@@ -78,7 +79,21 @@ jobs:
           # Output work repository head SHA
           echo "sha=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
 
+      # Skip commits pushed by this workflow, so that it never triggers on itself
+      - name: Skip own commits
+        id: guard
+        working-directory: work
+        run: |
+          if [ "$(git log -1 --format=%ae)" = '41898282+github-actions[bot]@users.noreply.github.com' ] \
+            && [ "$(git log -1 --format=%s)" = 'Compress PDF files' ]; then
+            echo 'skip=true' >> "${GITHUB_OUTPUT}"
+            echo '::notice::Head commit was pushed by this workflow, skipping.'
+          else
+            echo 'skip=false' >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: Install GhostScript
+        if: steps.guard.outputs.skip != 'true'
         run: |
           # Install GhostScript
           sudo apt-get update
@@ -87,6 +102,7 @@ jobs:
       # Execution steps
 
       - name: List changed PDF files
+        if: steps.guard.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -101,6 +117,7 @@ jobs:
           cat /tmp/pdfs.txt
 
       - name: Compress PDF files
+        if: steps.guard.outputs.skip != 'true'
         working-directory: work
         run: |
           # Prefix with ./ so that a file name can never be parsed as a GhostScript option
@@ -108,6 +125,7 @@ jobs:
           | xargs -d '\n' -r python3 ../trusted/pdfshrinker.py --min-reduction-base 1024 --
 
       - name: Summarize compression
+        if: steps.guard.outputs.skip != 'true'
         id: summary
         working-directory: work
         run: |
@@ -166,6 +184,7 @@ jobs:
           path: /tmp/compressed_pdfs
 
       - name: Upload summary
+        if: steps.guard.outputs.skip != 'true'
         uses: actions/upload-artifact@v7
         with:
           name: summary
@@ -303,6 +322,8 @@ jobs:
     # Job dependencies
     needs:
       - compress
+
+    if: needs.compress.outputs.skip != 'true'
 
     permissions:
       contents: read
