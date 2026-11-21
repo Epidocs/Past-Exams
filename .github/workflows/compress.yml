@@ -105,7 +105,7 @@ jobs:
         run: |
           # Prefix with ./ so that a file name can never be parsed as a GhostScript option
           sed 's|^|./|' /tmp/pdfs.txt \
-          | xargs -d '\n' -r python3 ../trusted/pdfshrinker.py --min-reduction-base 0 --
+          | xargs -d '\n' -r python3 ../trusted/pdfshrinker.py --min-reduction-base 1024 --
 
       - name: Summarize compression
         id: summary
