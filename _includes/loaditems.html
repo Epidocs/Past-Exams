@@ -41,7 +41,16 @@
 		{% if sfiles > 0 %}
 			<div class="list-group">
 				{% for file in subitems.files %}
-					<a href="{% if file.mcq %}https://mcq.epidocs.eu/?{% endif %}{{ site.github.url }}/{{ file.path }}" class="list-group-item list-group-item-action {% if file.embed %}embed{% endif %}" github-src="{{ site.github.repository_url }}/blob/master/{{ file.path }}">
+					{% capture file_label %}{% if file.name %}{{ file.name }}{% else %}{{ file.basename }}{% endif %}{% endcapture %}
+					<a href="{% if file.mcq %}https://mcq.epidocs.eu/?{% endif %}{{ site.github.url }}/{{ file.path }}"
+						class="list-group-item list-group-item-action {% if file.embed %}embed{% endif %}"
+						{% if file.embed %}
+						data-umami-event="Embedded PDF"
+						data-umami-event-label="{{ file_label | escape }}"
+						data-umami-event-path="{{ file.path | escape }}"
+						{% endif %}
+						github-src="{{ site.github.repository_url }}/blob/master/{{ file.path }}"
+					>
 						{% if file.name %}
 							{{ file.name }} ({{ file.basename }})
 						{% else %}
